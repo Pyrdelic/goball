@@ -40,7 +40,8 @@ func (p *Paddle) Draw(screen *ebiten.Image) {
 
 // BRICK vvvvvv
 type Brick struct {
-	Image *ebiten.Image
+	Image   *ebiten.Image
+	Testint int
 	Updater
 	Drawer
 	Entity
