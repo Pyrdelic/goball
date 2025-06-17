@@ -13,6 +13,7 @@ type Drawer interface {
 }
 
 // base struct for entities, with position and size
+// TODO: rename to Rect?
 type Entity struct {
 	X, Y, W, H int
 }
@@ -40,8 +41,7 @@ func (p *Paddle) Draw(screen *ebiten.Image) {
 
 // BRICK vvvvvv
 type Brick struct {
-	Image   *ebiten.Image
-	Testint int
+	Image *ebiten.Image
 	Updater
 	Drawer
 	Entity
@@ -59,3 +59,24 @@ func (b *Brick) Draw(screen *ebiten.Image) {
 }
 
 // BRICK ^^^^^^
+// BALL vvvvvv
+type Ball struct {
+	Image *ebiten.Image
+	Speed int
+	// TODO: direction
+	Updater
+	Drawer
+	Entity
+}
+
+func (b *Ball) Update() {
+	b.Y = b.Y + b.Speed
+}
+
+func (b *Ball) Draw(screen *ebiten.Image) {
+	DIO := ebiten.DrawImageOptions{}
+	DIO.GeoM.Translate(float64(b.X), float64(b.Y)) // ??
+	screen.DrawImage(b.Image, &DIO)
+}
+
+// BALL ^^^^^^

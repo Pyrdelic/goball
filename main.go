@@ -12,56 +12,57 @@ import (
 	"github.com/pyrdelic/goball/entities"
 )
 
-const (
-	brickColumnCount = 12
-	brickRowCount    = 6
-	brickCount       = brickColumnCount * brickRowCount
-	brickHeight      = 10
-	brickWidth       = playAreaWidth / brickColumnCount
-)
-
 type Game struct {
-	// TODO: entities into their respective structs
-	//paddle *ebiten.Image
-	// paddle       *ebiten.Image
 	paddleStruct entities.Paddle
-	// bricks       []*ebiten.Image
 	brickStructs []entities.Brick
+	ball         entities.Ball
+}
+
+func isColliding(a *entities.Ball, b *entities.Brick) bool {
+	// x axis
+	if !(a.X+a.W < b.X || b.X+b.W < a.X) {
+
+		// y axis
+		if !(a.Y+a.H < b.Y || b.Y+b.H < a.Y) {
+			return true
+		}
+	}
+	return false
 }
 
 func (g *Game) Update() error {
+	// check collisions
+	// TODO: optimize ( reduce checks per tick)
+	if isColliding(&g.ball, &g.brickStructs[0]) {
+		fmt.Println("Is colliding")
+		g.ball.Speed = -g.ball.Speed
+	}
+
+	for i := range g.brickStructs {
+		g.brickStructs[i].Update()
+	}
 	g.paddleStruct.Update()
+	g.ball.Update()
 	return nil
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	ebitenutil.DebugPrint(screen, "Hello, World!")
-	// paddleDIO := ebiten.DrawImageOptions{}
-	// cursorX, _ := ebiten.CursorPosition()
-	// paddleDIO.GeoM.Translate(float64(cursorX), 60)
-	// ebiten.SetCursorMode(ebiten.CursorModeHidden)
-	// screen.DrawImage(g.paddle, &paddleDIO)
-
-	// for i := range g.bricks {
-	// 	brickDIO := ebiten.DrawImageOptions{}
-	// 	//randomInt = rand.intN
-	// 	brickDIO.GeoM.Translate(float64(rand.Intn(640)), float64(rand.Intn(480)))
-	// 	screen.DrawImage(g.bricks[i], &brickDIO)
-	// }
 	for i := range g.brickStructs {
 		g.brickStructs[i].Draw(screen)
 	}
-	//fmt.Printf("before draw():\t%p\n", screen)
 	g.paddleStruct.Draw(screen)
-	// DIO := ebiten.DrawImageOptions{}
-	// DIO.GeoM.Translate(float64(g.paddleStruct.X), float64(g.paddleStruct.Y))
-	// screen.DrawImage(g.paddleStruct.Image, &DIO)
-
+	g.ball.Draw(screen)
 }
 
 const (
-	playAreaWidth  = 320
-	playAreaHeight = 240
+	playAreaWidth    = 320
+	playAreaHeight   = 240
+	brickColumnCount = 16
+	brickRowCount    = 6
+	brickCount       = brickColumnCount * brickRowCount
+	brickHeight      = 10
+	brickWidth       = playAreaWidth / brickColumnCount
 )
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
@@ -73,6 +74,8 @@ func main() {
 	ebiten.SetWindowTitle("GO-BALL")
 
 	game := Game{}
+
+	// init paddle
 	game.paddleStruct.X, _ = ebiten.CursorPosition()
 	game.paddleStruct.Y = 150
 	game.paddleStruct.W = 80
@@ -81,56 +84,53 @@ func main() {
 	//fmt.Println("dimensions: ", game.paddleStruct.W, game.paddleStruct.H) // works
 	game.paddleStruct.Image.Fill(color.White)
 
-	// init stuff before running the game
-	//game.paddle = ebiten.NewImage(20, 20)
-	//game.paddle.Fill(color.White)
-	ebiten.SetVsyncEnabled(false)
+	// init ball
 
-	// // init bricks
-	// for i := 0; i < 10; i++ {
-	// 	brick := ebiten.NewImage(10, 10)
-	// 	brick.Fill(color.RGBA{R: uint8(i * 5), G: 127, B: 127, A: 255})
-	// 	game.bricks = append(game.bricks, brick)
-	// }
-
-	// for i := range 10 {
-	// 	println("loop: ", i)
-	// }
+	game.ball.X = 200
+	game.ball.Y = 0
+	game.ball.W = 10
+	game.ball.H = 10
+	game.ball.Speed = 2
+	game.ball.Image = ebiten.NewImage(game.ball.W, game.ball.H)
+	game.ball.Image.Fill(color.White)
 
 	// init bricks
-	for iBrickRow := 0; iBrickRow < brickRowCount; iBrickRow++ {
-		for iBrickColumn := 0; iBrickColumn < brickColumnCount; iBrickColumn++ {
-			brick := entities.Brick{}
-			brick.X = iBrickColumn * brickWidth
-			brick.Y = iBrickRow * brickHeight
-			brick.W = brickWidth
-			brick.H = brickHeight
-			brick.Image = ebiten.NewImage(brick.W, brick.H)
-			brick.Image.Fill(color.RGBA{
-				R: uint8(iBrickRow * 25),
-				G: uint8(iBrickColumn * 10),
-				B: uint8(127),
-				A: uint8(255),
-			})
-			game.brickStructs = append(game.brickStructs, brick)
+	if false {
+		for iBrickRow := 0; iBrickRow < brickRowCount; iBrickRow++ {
+			for iBrickColumn := 0; iBrickColumn < brickColumnCount; iBrickColumn++ {
+				brick := entities.Brick{}
+				brick.X = iBrickColumn * brickWidth
+				brick.Y = iBrickRow * brickHeight
+				brick.W = brickWidth
+				brick.H = brickHeight
+				brick.Image = ebiten.NewImage(brick.W, brick.H)
+				brick.Image.Fill(color.RGBA{
+					R: uint8(iBrickRow * 25),
+					G: uint8(iBrickColumn * 10),
+					B: uint8(127),
+					A: uint8(255),
+				})
+				game.brickStructs = append(game.brickStructs, brick)
+			}
 		}
+	} else { // testing stuff
+		brick := entities.Brick{}
+		brick.X = 200
+		brick.Y = 100
+		brick.W = brickWidth
+		brick.H = brickHeight
+		brick.Image = ebiten.NewImage(brick.W, brick.H)
+		brick.Image.Fill(color.RGBA{
+			R: uint8(127),
+			G: uint8(127),
+			B: uint8(127),
+			A: uint8(255),
+		})
+		game.brickStructs = append(game.brickStructs, brick)
 	}
 
-	// for i, row, column := 0, 0, 0; i < brickCount; i++ {
-	// 	game.brickStructs[i].X = 0 + i*10
-	// 	game.brickStructs[i].Y = 0 + row*brickHeight
-	// 	game.brickStructs[i].W = playAreaHeight / brickColumnCount
-	// 	game.brickStructs[i].H = 10
-	// 	game.brickStructs[i].Image = ebiten.NewImage(game.brickStructs[i].W, game.brickStructs[i].H)
-	// 	fmt.Println("color: ", uint8(5+i*5))
-	// 	game.brickStructs[i].Image.Fill(color.RGBA{
-	// 		R: uint8(10 + i*10),
-	// 		G: uint8(127),
-	// 		B: uint8(127),
-	// 		A: uint8(255)})
-	// }
+	ebiten.SetVsyncEnabled(false)
 
-	fmt.Println("Run game")
 	if err := ebiten.RunGame(&game); err != nil {
 		log.Fatal(err)
 	}
