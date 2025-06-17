@@ -3,9 +3,9 @@ package main
 import (
 	//"crypto/rand"
 
-	"fmt"
 	"image/color"
 	"log"
+	"slices"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -18,7 +18,7 @@ type Game struct {
 	ball         entities.Ball
 }
 
-func isColliding(a *entities.Ball, b *entities.Brick) bool {
+func isColliding(a *entities.Rect, b *entities.Rect) bool {
 	// x axis
 	if !(a.X+a.W < b.X || b.X+b.W < a.X) {
 
@@ -33,10 +33,29 @@ func isColliding(a *entities.Ball, b *entities.Brick) bool {
 func (g *Game) Update() error {
 	// check collisions
 	// TODO: optimize ( reduce checks per tick)
-	if isColliding(&g.ball, &g.brickStructs[0]) {
-		fmt.Println("Is colliding")
-		g.ball.Speed = -g.ball.Speed
+	// TODO: prevent hitting multiple bricks at once (test collision from center of ball edge)
+	for i := range g.brickStructs {
+		if isColliding(&g.ball.Rect, &g.brickStructs[i].Rect) {
+			g.brickStructs[i].Health--
+			g.ball.Speed = -g.ball.Speed
+		}
 	}
+	// destroy bricks with 0 or less health
+	g.brickStructs = slices.DeleteFunc(g.brickStructs, func(b entities.Brick) bool {
+		if b.Health <= 0 {
+			return true
+		} else {
+			return false
+		}
+	})
+
+	// if isColliding(&g.ball.Rect, &g.brickStructs[0].Rect) {
+	// 	fmt.Println("Is colliding")
+	// 	// change ball direction
+	// 	g.ball.Speed = -g.ball.Speed
+	// 	// destory (or damage) brick
+
+	// }
 
 	for i := range g.brickStructs {
 		g.brickStructs[i].Update()
@@ -56,8 +75,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 }
 
 const (
-	playAreaWidth    = 320
-	playAreaHeight   = 240
+	playAreaWidth    = 320 // in-game resolution
+	playAreaHeight   = 240 // in-game resolution
 	brickColumnCount = 16
 	brickRowCount    = 6
 	brickCount       = brickColumnCount * brickRowCount
@@ -76,34 +95,34 @@ func main() {
 	game := Game{}
 
 	// init paddle
-	game.paddleStruct.X, _ = ebiten.CursorPosition()
-	game.paddleStruct.Y = 150
-	game.paddleStruct.W = 80
-	game.paddleStruct.H = 10
-	game.paddleStruct.Image = ebiten.NewImage(game.paddleStruct.W, game.paddleStruct.H)
-	//fmt.Println("dimensions: ", game.paddleStruct.W, game.paddleStruct.H) // works
+	game.paddleStruct.Rect.X, _ = ebiten.CursorPosition()
+	game.paddleStruct.Rect.Y = 150
+	game.paddleStruct.Rect.W = 80
+	game.paddleStruct.Rect.H = 10
+	game.paddleStruct.Image = ebiten.NewImage(game.paddleStruct.Rect.W, game.paddleStruct.Rect.H)
 	game.paddleStruct.Image.Fill(color.White)
 
 	// init ball
 
-	game.ball.X = 200
-	game.ball.Y = 0
-	game.ball.W = 10
-	game.ball.H = 10
-	game.ball.Speed = 2
-	game.ball.Image = ebiten.NewImage(game.ball.W, game.ball.H)
+	game.ball.Rect.X = 205
+	game.ball.Rect.Y = 300
+	game.ball.Rect.W = 10
+	game.ball.Rect.H = 10
+	game.ball.Speed = -2
+	game.ball.Image = ebiten.NewImage(game.ball.Rect.W, game.ball.Rect.H)
 	game.ball.Image.Fill(color.White)
 
 	// init bricks
-	if false {
+	if true {
 		for iBrickRow := 0; iBrickRow < brickRowCount; iBrickRow++ {
 			for iBrickColumn := 0; iBrickColumn < brickColumnCount; iBrickColumn++ {
 				brick := entities.Brick{}
-				brick.X = iBrickColumn * brickWidth
-				brick.Y = iBrickRow * brickHeight
-				brick.W = brickWidth
-				brick.H = brickHeight
-				brick.Image = ebiten.NewImage(brick.W, brick.H)
+				brick.Health = 1
+				brick.Rect.X = iBrickColumn * brickWidth
+				brick.Rect.Y = iBrickRow * brickHeight
+				brick.Rect.W = brickWidth
+				brick.Rect.H = brickHeight
+				brick.Image = ebiten.NewImage(brick.Rect.W, brick.Rect.H)
 				brick.Image.Fill(color.RGBA{
 					R: uint8(iBrickRow * 25),
 					G: uint8(iBrickColumn * 10),
@@ -115,11 +134,11 @@ func main() {
 		}
 	} else { // testing stuff
 		brick := entities.Brick{}
-		brick.X = 200
-		brick.Y = 100
-		brick.W = brickWidth
-		brick.H = brickHeight
-		brick.Image = ebiten.NewImage(brick.W, brick.H)
+		brick.Rect.X = 200
+		brick.Rect.Y = 100
+		brick.Rect.W = brickWidth
+		brick.Rect.H = brickHeight
+		brick.Image = ebiten.NewImage(brick.Rect.W, brick.Rect.H)
 		brick.Image.Fill(color.RGBA{
 			R: uint8(127),
 			G: uint8(127),
