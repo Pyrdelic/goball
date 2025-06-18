@@ -71,7 +71,8 @@ func (b *Brick) Draw(screen *ebiten.Image) {
 type Ball struct {
 	Image *ebiten.Image
 	Rect  Rect
-	Speed int
+	//Speed          int
+	SpeedX, SpeedY int
 	// TODO: direction
 	Updater
 	Drawer
@@ -79,7 +80,9 @@ type Ball struct {
 }
 
 func (b *Ball) Update() {
-	b.Rect.Y = b.Rect.Y + b.Speed
+	//b.Rect.Y = b.Rect.Y + b.Speed
+	b.Rect.Y = b.Rect.Y + b.SpeedY
+	b.Rect.X = b.Rect.X + b.SpeedX
 }
 
 func (b *Ball) Draw(screen *ebiten.Image) {

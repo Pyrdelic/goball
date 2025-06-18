@@ -18,6 +18,7 @@ type Game struct {
 	ball         entities.Ball
 }
 
+// Detects a general collision between two Rects
 func isColliding(a *entities.Rect, b *entities.Rect) bool {
 	// x axis
 	if !(a.X+a.W < b.X || b.X+b.W < a.X) {
@@ -33,11 +34,38 @@ func isColliding(a *entities.Rect, b *entities.Rect) bool {
 func (g *Game) Update() error {
 	// check collisions
 	// TODO: optimize ( reduce checks per tick)
-	// TODO: prevent hitting multiple bricks at once (test collision from center of ball edge)
+
+	alreadyBounced := false // prevents bounce cancellation if multiple collision
+	// brick collisions
 	for i := range g.brickStructs {
 		if isColliding(&g.ball.Rect, &g.brickStructs[i].Rect) {
+			// collision detected
+			// calculate collision lengths x, y to determine x or y sided bounce
+			if !alreadyBounced {
+				var xCollisionLength, yCollisionLength int
+				// xCollisionLength
+				if g.ball.Rect.X < g.brickStructs[i].Rect.X {
+					xCollisionLength = g.ball.Rect.X + g.ball.Rect.W - g.brickStructs[i].Rect.X
+				} else {
+					xCollisionLength = g.brickStructs[i].Rect.X + g.brickStructs[i].Rect.X - g.ball.Rect.X
+				}
+				// yCollisionLength
+				if g.ball.Rect.Y < g.brickStructs[i].Rect.Y {
+					yCollisionLength = g.ball.Rect.Y + g.ball.Rect.W - g.brickStructs[i].Rect.Y
+				} else {
+					yCollisionLength = g.brickStructs[i].Rect.Y + g.brickStructs[i].Rect.H - g.ball.Rect.Y
+				}
+				if xCollisionLength > yCollisionLength {
+					// top / bottom collision
+					g.ball.SpeedY = -g.ball.SpeedY
+					alreadyBounced = true
+				} else {
+					// side collision
+					g.ball.SpeedX = -g.ball.SpeedX
+					alreadyBounced = true
+				}
+			}
 			g.brickStructs[i].Health--
-			g.ball.Speed = -g.ball.Speed
 		}
 	}
 	// destroy bricks with 0 or less health
@@ -48,6 +76,7 @@ func (g *Game) Update() error {
 			return false
 		}
 	})
+	// wall collisions
 
 	// if isColliding(&g.ball.Rect, &g.brickStructs[0].Rect) {
 	// 	fmt.Println("Is colliding")
@@ -104,11 +133,13 @@ func main() {
 
 	// init ball
 
-	game.ball.Rect.X = 205
+	game.ball.Rect.X = 300
 	game.ball.Rect.Y = 300
 	game.ball.Rect.W = 10
 	game.ball.Rect.H = 10
-	game.ball.Speed = -2
+	//game.ball.Speed = -2
+	game.ball.SpeedX = -2
+	game.ball.SpeedY = -2
 	game.ball.Image = ebiten.NewImage(game.ball.Rect.W, game.ball.Rect.H)
 	game.ball.Image.Fill(color.White)
 
