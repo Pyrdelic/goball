@@ -14,7 +14,7 @@ import (
 
 type Game struct {
 	paddleStruct entities.Paddle
-	brickStructs []entities.Brick
+	bricks       []entities.Brick
 	ball         entities.Ball
 }
 
@@ -35,59 +35,72 @@ func (g *Game) Update() error {
 	// check collisions
 	// TODO: optimize ( reduce checks per tick)
 
-	alreadyBounced := false // prevents bounce cancellation if multiple collision
+	alreadyBouncedBrick := false // prevents bounce cancellation if multiple collision
 	// brick collisions
-	for i := range g.brickStructs {
-		if isColliding(&g.ball.Rect, &g.brickStructs[i].Rect) {
+	for i := range g.bricks {
+		if isColliding(&g.ball.Rect, &g.bricks[i].Rect) {
 			// collision detected
 			// calculate collision lengths x, y to determine x or y sided bounce
-			if !alreadyBounced {
+			if !alreadyBouncedBrick {
 				var xCollisionLength, yCollisionLength int
 				// xCollisionLength
-				if g.ball.Rect.X < g.brickStructs[i].Rect.X {
-					xCollisionLength = g.ball.Rect.X + g.ball.Rect.W - g.brickStructs[i].Rect.X
+				if g.ball.Rect.X < g.bricks[i].Rect.X {
+					xCollisionLength = g.ball.Rect.X + g.ball.Rect.W - g.bricks[i].Rect.X
 				} else {
-					xCollisionLength = g.brickStructs[i].Rect.X + g.brickStructs[i].Rect.X - g.ball.Rect.X
+					xCollisionLength = g.bricks[i].Rect.X + g.bricks[i].Rect.X - g.ball.Rect.X
 				}
 				// yCollisionLength
-				if g.ball.Rect.Y < g.brickStructs[i].Rect.Y {
-					yCollisionLength = g.ball.Rect.Y + g.ball.Rect.W - g.brickStructs[i].Rect.Y
+				if g.ball.Rect.Y < g.bricks[i].Rect.Y {
+					yCollisionLength = g.ball.Rect.Y + g.ball.Rect.W - g.bricks[i].Rect.Y
 				} else {
-					yCollisionLength = g.brickStructs[i].Rect.Y + g.brickStructs[i].Rect.H - g.ball.Rect.Y
+					yCollisionLength = g.bricks[i].Rect.Y + g.bricks[i].Rect.H - g.ball.Rect.Y
 				}
-				if xCollisionLength > yCollisionLength {
+
+				if xCollisionLength >= yCollisionLength {
 					// top / bottom collision
 					g.ball.SpeedY = -g.ball.SpeedY
-					alreadyBounced = true
+					alreadyBouncedBrick = true
 				} else {
 					// side collision
 					g.ball.SpeedX = -g.ball.SpeedX
-					alreadyBounced = true
+					alreadyBouncedBrick = true
 				}
 			}
-			g.brickStructs[i].Health--
+			g.bricks[i].Health--
 		}
 	}
 	// destroy bricks with 0 or less health
-	g.brickStructs = slices.DeleteFunc(g.brickStructs, func(b entities.Brick) bool {
+	g.bricks = slices.DeleteFunc(g.bricks, func(b entities.Brick) bool {
 		if b.Health <= 0 {
 			return true
 		} else {
 			return false
 		}
 	})
-	// wall collisions
 
-	// if isColliding(&g.ball.Rect, &g.brickStructs[0].Rect) {
-	// 	fmt.Println("Is colliding")
-	// 	// change ball direction
-	// 	g.ball.Speed = -g.ball.Speed
-	// 	// destory (or damage) brick
+	// wall collisions & bounce
+	// left wall
+	if g.ball.Rect.X <= 0 {
+		g.ball.SpeedX = -g.ball.SpeedX
+	}
+	// right wall
+	if g.ball.Rect.X+g.ball.Rect.W >= playAreaWidth {
+		g.ball.SpeedX = -g.ball.SpeedX
+	}
+	// ceiling
+	if g.ball.Rect.Y <= 0 {
+		g.ball.SpeedY = -g.ball.SpeedY
+	}
+	// floor
+	if g.ball.Rect.Y+g.ball.Rect.W >= playAreaHeight {
+		// TODO: game over / losing a ball
+		g.ball.SpeedY = -g.ball.SpeedY
+	}
 
-	// }
+	// Paddle collisions & bounce
 
-	for i := range g.brickStructs {
-		g.brickStructs[i].Update()
+	for i := range g.bricks {
+		g.bricks[i].Update()
 	}
 	g.paddleStruct.Update()
 	g.ball.Update()
@@ -96,8 +109,8 @@ func (g *Game) Update() error {
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	ebitenutil.DebugPrint(screen, "Hello, World!")
-	for i := range g.brickStructs {
-		g.brickStructs[i].Draw(screen)
+	for i := range g.bricks {
+		g.bricks[i].Draw(screen)
 	}
 	g.paddleStruct.Draw(screen)
 	g.ball.Draw(screen)
@@ -133,8 +146,8 @@ func main() {
 
 	// init ball
 
-	game.ball.Rect.X = 300
-	game.ball.Rect.Y = 300
+	game.ball.Rect.X = 150
+	game.ball.Rect.Y = 150
 	game.ball.Rect.W = 10
 	game.ball.Rect.H = 10
 	//game.ball.Speed = -2
@@ -160,7 +173,7 @@ func main() {
 					B: uint8(127),
 					A: uint8(255),
 				})
-				game.brickStructs = append(game.brickStructs, brick)
+				game.bricks = append(game.bricks, brick)
 			}
 		}
 	} else { // testing stuff
@@ -176,7 +189,7 @@ func main() {
 			B: uint8(127),
 			A: uint8(255),
 		})
-		game.brickStructs = append(game.brickStructs, brick)
+		game.bricks = append(game.bricks, brick)
 	}
 
 	ebiten.SetVsyncEnabled(false)
