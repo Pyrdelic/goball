@@ -98,6 +98,11 @@ func (g *Game) Update() error {
 	}
 
 	// Paddle collisions & bounce
+	if isColliding(&g.ball.Rect, &g.paddleStruct.Rect) {
+		if g.ball.SpeedY > 0 {
+			g.ball.SpeedY = -g.ball.SpeedY
+		}
+	}
 
 	for i := range g.bricks {
 		g.bricks[i].Update()
