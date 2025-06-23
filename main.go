@@ -2,6 +2,8 @@ package main
 
 import (
 	//"crypto/rand"
+	"fmt"
+	"math"
 
 	"image/color"
 	"log"
@@ -31,6 +33,17 @@ func isColliding(a *entities.Rect, b *entities.Rect) bool {
 	return false
 }
 
+// returns a game coordinate -rotated x y speed components
+// for a desired angle and base speed multiplier
+func speedXYForAngle(speedBaseMultiplier float64, angle float64) (int, int) {
+
+	radian := angle * (math.Pi / 180)
+	speedX := speedBaseMultiplier * math.Sin(radian)
+	speedY := speedBaseMultiplier * math.Cos(radian)
+	// flip Y component to correct for game space coordinate system
+	return int(speedX), int(-speedY)
+}
+
 func (g *Game) Update() error {
 	// check collisions
 	// TODO: optimize ( reduce checks per tick)
@@ -40,7 +53,8 @@ func (g *Game) Update() error {
 	for i := range g.bricks {
 		if isColliding(&g.ball.Rect, &g.bricks[i].Rect) {
 			// collision detected
-			// calculate collision lengths x, y to determine x or y sided bounce
+
+			// calculate collision lengths x, y to determine x (L, R) or y (T, B) sided bounce
 			if !alreadyBouncedBrick {
 				var xCollisionLength, yCollisionLength int
 				// xCollisionLength
@@ -99,6 +113,33 @@ func (g *Game) Update() error {
 
 	// Paddle collisions & bounce
 	if isColliding(&g.ball.Rect, &g.paddleStruct.Rect) {
+		// Ball's bounce angle is determined by the point
+		// of collision on the paddle.
+		ballCenterX := g.ball.Rect.X + g.ball.Rect.W/2
+
+		// segmented determination of bounce (launch) angle
+		segmentAngleDegrees := 22.5
+		paddleSegmentLenX := g.paddleStruct.Rect.W / 6
+		if ballCenterX < g.paddleStruct.Rect.X+paddleSegmentLenX {
+			fmt.Println("hit segment 1")
+			g.ball.SpeedX, g.ball.SpeedY = speedXYForAngle(g.ball.SpeedMultiplier, 360-(segmentAngleDegrees*3))
+		} else if ballCenterX < g.paddleStruct.Rect.X+paddleSegmentLenX*2 {
+			fmt.Println("hit segment 2")
+			g.ball.SpeedX, g.ball.SpeedY = speedXYForAngle(g.ball.SpeedMultiplier, 360-(segmentAngleDegrees*2))
+		} else if ballCenterX < g.paddleStruct.Rect.X+paddleSegmentLenX*3 {
+			fmt.Println("hit segment 3")
+			g.ball.SpeedX, g.ball.SpeedY = speedXYForAngle(g.ball.SpeedMultiplier, 360-(segmentAngleDegrees))
+		} else if ballCenterX < g.paddleStruct.Rect.X+paddleSegmentLenX*4 {
+			fmt.Println("hit segment 4")
+			g.ball.SpeedX, g.ball.SpeedY = speedXYForAngle(g.ball.SpeedMultiplier, segmentAngleDegrees)
+		} else if ballCenterX < g.paddleStruct.Rect.X+paddleSegmentLenX*5 {
+			fmt.Println("hit segment 5")
+			g.ball.SpeedX, g.ball.SpeedY = speedXYForAngle(g.ball.SpeedMultiplier, segmentAngleDegrees*2)
+		} else {
+			fmt.Println("hit segment 6")
+			g.ball.SpeedX, g.ball.SpeedY = speedXYForAngle(g.ball.SpeedMultiplier, segmentAngleDegrees*3)
+		}
+
 		if g.ball.SpeedY > 0 {
 			g.ball.SpeedY = -g.ball.SpeedY
 		}
@@ -136,6 +177,14 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 }
 
 func main() {
+	// if true {
+	// 	var degree float64 = 22.5
+	// 	var baseSpeed float64 = 22.0
+	// 	sX, sY := speedXYForAngle(baseSpeed, degree)
+	// 	fmt.Println(degree, "|", sX, "|", sY)
+	// 	return
+	// }
+
 	ebiten.SetWindowSize(640, 480)
 	ebiten.SetWindowTitle("GO-BALL")
 
@@ -158,6 +207,7 @@ func main() {
 	//game.ball.Speed = -2
 	game.ball.SpeedX = -2
 	game.ball.SpeedY = -2
+	game.ball.SpeedMultiplier = 2.0
 	game.ball.Image = ebiten.NewImage(game.ball.Rect.W, game.ball.Rect.H)
 	game.ball.Image.Fill(color.White)
 

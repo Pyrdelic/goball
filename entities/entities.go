@@ -72,7 +72,8 @@ type Ball struct {
 	Image *ebiten.Image
 	Rect  Rect
 	//Speed          int
-	SpeedX, SpeedY int
+	SpeedMultiplier float64
+	SpeedX, SpeedY  int
 	// TODO: direction
 	Updater
 	Drawer
