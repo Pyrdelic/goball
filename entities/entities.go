@@ -19,7 +19,7 @@ type Entity struct {
 }
 
 type Rect struct {
-	X, Y, W, H int
+	X, Y, W, H float64
 }
 
 // PADDLE vvvvv
@@ -32,7 +32,8 @@ type Paddle struct {
 }
 
 func (p *Paddle) Update() {
-	p.Rect.X, _ = ebiten.CursorPosition()
+	x, _ := ebiten.CursorPosition()
+	p.Rect.X = float64(x)
 }
 
 func (p *Paddle) Draw(screen *ebiten.Image) {
@@ -73,7 +74,7 @@ type Ball struct {
 	Rect  Rect
 	//Speed          int
 	SpeedMultiplier float64
-	SpeedX, SpeedY  int
+	SpeedX, SpeedY  float64
 	// TODO: direction
 	Updater
 	Drawer
