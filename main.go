@@ -2,6 +2,7 @@ package main
 
 import (
 	//"crypto/rand"
+	"errors"
 	"fmt"
 	"math"
 
@@ -11,13 +12,15 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/pyrdelic/goball/config"
 	"github.com/pyrdelic/goball/entities"
 )
 
 type Game struct {
-	paddle entities.Paddle
-	bricks []entities.Brick
-	ball   entities.Ball
+	paddle  entities.Paddle
+	bricks  []entities.Brick
+	ball    entities.Ball
+	playing bool
 }
 
 // Detects a general collision between two Rects
@@ -47,6 +50,11 @@ func speedXYForAngle(speedBase float64, angle float64) (float64, float64) {
 func (g *Game) Update() error {
 	// check collisions
 	// TODO: optimize ( reduce checks per tick)
+
+	if ebiten.IsKeyPressed(ebiten.KeyEscape) {
+		// We exit the game by returning a custom error
+		return Terminated
+	}
 
 	alreadyBouncedBrick := false // prevents bounce cancellation if multiple collision
 	// brick collisions
@@ -98,7 +106,7 @@ func (g *Game) Update() error {
 		g.ball.SpeedX = -g.ball.SpeedX
 	}
 	// right wall
-	if g.ball.Rect.X+g.ball.Rect.W >= playAreaWidth {
+	if g.ball.Rect.X+g.ball.Rect.W >= config.PlayAreaWidth {
 		g.ball.SpeedX = -g.ball.SpeedX
 	}
 	// ceiling
@@ -106,7 +114,7 @@ func (g *Game) Update() error {
 		g.ball.SpeedY = -g.ball.SpeedY
 	}
 	// floor
-	if g.ball.Rect.Y+g.ball.Rect.W >= playAreaHeight {
+	if g.ball.Rect.Y+g.ball.Rect.W >= config.PlayAreaHeight {
 		// TODO: game over / losing a ball
 		g.ball.SpeedY = -g.ball.SpeedY
 	}
@@ -171,19 +179,24 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	g.ball.Draw(screen)
 }
 
-const (
-	playAreaHeight   = 240 // in-game resolution
-	playAreaWidth    = 320 // in-game resolution
-	brickColumnCount = 16
-	brickRowCount    = 6
-	brickCount       = brickColumnCount * brickRowCount
-	brickHeight      = 10
-	brickWidth       = playAreaWidth / brickColumnCount
-)
+// const (
+// 	playAreaHeight      = 240 // in-game resolution
+// 	playAreaWidth       = 320 // in-game resolution
+// 	brickColumnCount    = 16
+// 	brickRowCount       = 6
+// 	brickCount          = brickColumnCount * brickRowCount
+// 	brickHeight         = 10
+// 	brickWidth          = playAreaWidth / brickColumnCount
+// 	paddleStartingWidth = playAreaWidth / 6
+// 	ballStartingSpeed   = 2.0
+// )
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
-	return playAreaWidth, playAreaHeight
+	return config.PlayAreaWidth, config.PlayAreaHeight
 }
+
+// Custom error to exit the game in a regular way.
+var Terminated = errors.New("terminated")
 
 func main() {
 	// if true {
@@ -194,8 +207,6 @@ func main() {
 	// 	return
 	// }
 
-	fmt.Println("brick width: ", brickWidth)
-
 	ebiten.SetWindowSize(640, 480)
 	ebiten.SetWindowTitle("GO-BALL")
 
@@ -205,8 +216,8 @@ func main() {
 	cursorX, _ := ebiten.CursorPosition()
 	game.paddle.Rect.X = float64(cursorX)
 	game.paddle.Rect.Y = 200
-	game.paddle.Rect.W = 80
-	game.paddle.Rect.H = 10
+	game.paddle.Rect.W = config.PaddleStartingWidth
+	game.paddle.Rect.H = 5
 	game.paddle.Image = ebiten.NewImage(int(game.paddle.Rect.W), int(game.paddle.Rect.H))
 	game.paddle.Image.Fill(color.White)
 
@@ -217,22 +228,23 @@ func main() {
 	game.ball.Rect.W = 10
 	game.ball.Rect.H = 10
 	//game.ball.Speed = -2
-	game.ball.SpeedX = -2
-	game.ball.SpeedY = -2
-	game.ball.SpeedMultiplier = 6.0
+	game.ball.SpeedMultiplier = config.BallStartingSpeed
+	game.ball.SpeedX, game.ball.SpeedY = speedXYForAngle(
+		game.ball.SpeedMultiplier, 360.0-12.75)
+
 	game.ball.Image = ebiten.NewImage(int(game.ball.Rect.W), int(game.ball.Rect.H))
 	game.ball.Image.Fill(color.White)
 
 	// init bricks
 	if true {
-		for iBrickRow := 0; iBrickRow < brickRowCount; iBrickRow++ {
-			for iBrickColumn := 0; iBrickColumn < brickColumnCount; iBrickColumn++ {
+		for iBrickRow := 0; iBrickRow < config.BrickRowCount; iBrickRow++ {
+			for iBrickColumn := 0; iBrickColumn < config.BrickColumnCount; iBrickColumn++ {
 				brick := entities.Brick{}
 				brick.Health = 1
-				brick.Rect.X = float64(iBrickColumn * brickWidth)
-				brick.Rect.Y = float64(iBrickRow * brickHeight)
-				brick.Rect.W = brickWidth
-				brick.Rect.H = brickHeight
+				brick.Rect.X = float64(iBrickColumn * config.BrickWidth)
+				brick.Rect.Y = float64(iBrickRow * config.BrickHeight)
+				brick.Rect.W = config.BrickWidth
+				brick.Rect.H = config.BrickHeight
 				brick.Image = ebiten.NewImage(int(brick.Rect.W), int(brick.Rect.H))
 				brick.Image.Fill(color.RGBA{
 					R: uint8(iBrickRow * 25),
@@ -247,8 +259,8 @@ func main() {
 		brick := entities.Brick{}
 		brick.Rect.X = 200
 		brick.Rect.Y = 100
-		brick.Rect.W = brickWidth
-		brick.Rect.H = brickHeight
+		brick.Rect.W = config.BrickWidth
+		brick.Rect.H = config.BrickHeight
 		brick.Image = ebiten.NewImage(int(brick.Rect.W), int(brick.Rect.H))
 		brick.Image.Fill(color.RGBA{
 			R: uint8(127),
@@ -262,6 +274,10 @@ func main() {
 	ebiten.SetVsyncEnabled(false)
 
 	if err := ebiten.RunGame(&game); err != nil {
+		if err == Terminated {
+			// Regular termination
+			return
+		}
 		log.Fatal(err)
 	}
 }
