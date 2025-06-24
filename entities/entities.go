@@ -2,6 +2,7 @@ package entities
 
 import (
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/pyrdelic/goball/config"
 )
 
 type Updater interface {
@@ -33,6 +34,15 @@ type Paddle struct {
 
 func (p *Paddle) Update() {
 	x, _ := ebiten.CursorPosition()
+	// center paddle to cursor
+	x = x - int(p.Rect.W/2)
+
+	// constrain to walls
+	if x < 0 {
+		x = 0
+	} else if x+int(p.Rect.W) > config.PlayAreaWidth {
+		x = int(config.PlayAreaWidth - p.Rect.W)
+	}
 	p.Rect.X = float64(x)
 }
 

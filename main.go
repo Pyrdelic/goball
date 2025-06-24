@@ -272,6 +272,7 @@ func main() {
 	}
 
 	ebiten.SetVsyncEnabled(false)
+	ebiten.SetCursorMode(ebiten.CursorModeHidden)
 
 	if err := ebiten.RunGame(&game); err != nil {
 		if err == Terminated {
