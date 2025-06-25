@@ -4,6 +4,8 @@ const (
 	PlayAreaWidth  = 320 // in-game resolution
 	PlayAreaHeight = 240 // in-game resolution
 
+	StartingLives = 3
+
 	BrickColumnCount = 16
 	BrickRowCount    = 6
 	BrickCount       = BrickColumnCount * BrickRowCount
@@ -13,12 +15,7 @@ const (
 	PaddleStartingWidth = PlayAreaWidth / 6
 
 	BallStartingSpeed = 2.0
+	BallSize          = 5.0
+
+	GodMode = true
 )
-
-type AppConfig struct {
-	Test int
-}
-
-// var Config = AppConfig{
-// 	Test: 1337,
-// }

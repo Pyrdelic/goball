@@ -85,6 +85,7 @@ type Ball struct {
 	//Speed          int
 	SpeedMultiplier float64
 	SpeedX, SpeedY  float64
+	Grabbed         bool
 	// TODO: direction
 	Updater
 	Drawer
@@ -93,8 +94,10 @@ type Ball struct {
 
 func (b *Ball) Update() {
 	//b.Rect.Y = b.Rect.Y + b.Speed
-	b.Rect.Y = b.Rect.Y + b.SpeedY
-	b.Rect.X = b.Rect.X + b.SpeedX
+	if !b.Grabbed {
+		b.Rect.Y = b.Rect.Y + b.SpeedY
+		b.Rect.X = b.Rect.X + b.SpeedX
+	}
 }
 
 func (b *Ball) Draw(screen *ebiten.Image) {

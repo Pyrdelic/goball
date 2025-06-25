@@ -1,7 +1,6 @@
 package main
 
 import (
-	//"crypto/rand"
 	"errors"
 	"fmt"
 	"math"
@@ -17,10 +16,10 @@ import (
 )
 
 type Game struct {
-	paddle  entities.Paddle
-	bricks  []entities.Brick
-	ball    entities.Ball
-	playing bool
+	paddle entities.Paddle
+	bricks []entities.Brick
+	ball   entities.Ball
+	lives  int
 }
 
 // Detects a general collision between two Rects
@@ -53,7 +52,14 @@ func (g *Game) Update() error {
 
 	if ebiten.IsKeyPressed(ebiten.KeyEscape) {
 		// We exit the game by returning a custom error
-		return Terminated
+		return ErrTerminated
+	}
+	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
+		g.ball.Grabbed = false
+		if g.ball.SpeedY > 0 {
+			// launch upwards
+			g.ball.SpeedY = -g.ball.SpeedY
+		}
 	}
 
 	alreadyBouncedBrick := false // prevents bounce cancellation if multiple collision
@@ -102,20 +108,20 @@ func (g *Game) Update() error {
 
 	// wall collisions & bounce
 	// left wall
-	if g.ball.Rect.X <= 0 {
+	if g.ball.Rect.X <= 0 && g.ball.SpeedX < 0 {
 		g.ball.SpeedX = -g.ball.SpeedX
 	}
 	// right wall
-	if g.ball.Rect.X+g.ball.Rect.W >= config.PlayAreaWidth {
+	if g.ball.Rect.X+g.ball.Rect.W >= config.PlayAreaWidth && g.ball.SpeedX > 0 {
 		g.ball.SpeedX = -g.ball.SpeedX
 	}
 	// ceiling
-	if g.ball.Rect.Y <= 0 {
+	if g.ball.Rect.Y <= 0 && g.ball.SpeedY < 0 {
 		g.ball.SpeedY = -g.ball.SpeedY
 	}
 	// floor
-	if g.ball.Rect.Y+g.ball.Rect.W >= config.PlayAreaHeight {
-		// TODO: game over / losing a ball
+	if g.ball.Rect.Y+g.ball.Rect.W >= config.PlayAreaHeight && g.ball.SpeedY > 0 {
+		// TODO: lose a ball / lose a life / game over
 		g.ball.SpeedY = -g.ball.SpeedY
 	}
 
@@ -165,38 +171,34 @@ func (g *Game) Update() error {
 	for i := range g.bricks {
 		g.bricks[i].Update()
 	}
+
 	g.paddle.Update()
-	g.ball.Update()
+
+	if !g.ball.Grabbed {
+		g.ball.Update()
+	} else {
+		g.ball.Rect.X = g.paddle.Rect.X
+	}
+
 	return nil
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	ebitenutil.DebugPrint(screen, "Hello, World!")
+	//ebitenutil.DebugPrint(screen, "Hello, World!")
 	for i := range g.bricks {
 		g.bricks[i].Draw(screen)
 	}
 	g.paddle.Draw(screen)
 	g.ball.Draw(screen)
+	ebitenutil.DebugPrint(screen, fmt.Sprintf("lives: %d", g.lives))
 }
-
-// const (
-// 	playAreaHeight      = 240 // in-game resolution
-// 	playAreaWidth       = 320 // in-game resolution
-// 	brickColumnCount    = 16
-// 	brickRowCount       = 6
-// 	brickCount          = brickColumnCount * brickRowCount
-// 	brickHeight         = 10
-// 	brickWidth          = playAreaWidth / brickColumnCount
-// 	paddleStartingWidth = playAreaWidth / 6
-// 	ballStartingSpeed   = 2.0
-// )
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
 	return config.PlayAreaWidth, config.PlayAreaHeight
 }
 
-// Custom error to exit the game in a regular way.
-var Terminated = errors.New("terminated")
+// Custom error to exit the game loop in a regular way.
+var ErrTerminated = errors.New("terminated")
 
 func main() {
 	// if true {
@@ -214,6 +216,7 @@ func main() {
 
 	// init paddle
 	cursorX, _ := ebiten.CursorPosition()
+	game.lives = config.StartingLives
 	game.paddle.Rect.X = float64(cursorX)
 	game.paddle.Rect.Y = 200
 	game.paddle.Rect.W = config.PaddleStartingWidth
@@ -225,12 +228,13 @@ func main() {
 
 	game.ball.Rect.X = 100
 	game.ball.Rect.Y = 100
-	game.ball.Rect.W = 10
-	game.ball.Rect.H = 10
+	game.ball.Rect.W = config.BallSize
+	game.ball.Rect.H = config.BallSize
 	//game.ball.Speed = -2
 	game.ball.SpeedMultiplier = config.BallStartingSpeed
 	game.ball.SpeedX, game.ball.SpeedY = speedXYForAngle(
 		game.ball.SpeedMultiplier, 360.0-12.75)
+	game.ball.Grabbed = true
 
 	game.ball.Image = ebiten.NewImage(int(game.ball.Rect.W), int(game.ball.Rect.H))
 	game.ball.Image.Fill(color.White)
@@ -275,7 +279,7 @@ func main() {
 	ebiten.SetCursorMode(ebiten.CursorModeHidden)
 
 	if err := ebiten.RunGame(&game); err != nil {
-		if err == Terminated {
+		if err == ErrTerminated {
 			// Regular termination
 			return
 		}
