@@ -13,16 +13,16 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/pyrdelic/goball/config"
 	"github.com/pyrdelic/goball/entities"
+	"github.com/pyrdelic/goball/level"
 )
 
 type Game struct {
-	paddle entities.Paddle
-	bricks []entities.Brick
-	ball   entities.Ball
-	lives  int
+	paddle    entities.Paddle
+	bricks    []entities.Brick
+	ball      entities.Ball
+	lives     int
+	currLevel level.Level
 }
-
-// asdf
 
 // Detects a general collision between two Rects
 func isColliding(a *entities.Rect, b *entities.Rect) bool {
@@ -210,6 +210,11 @@ func main() {
 	// 	fmt.Println(degree, "|", sX, "|", sY)
 	// 	return
 	// }
+	if false {
+		lvl := level.Level{}
+		lvl.LoadFromFile("level1.txt")
+		return
+	}
 
 	ebiten.SetWindowSize(640, 480)
 	ebiten.SetWindowTitle("GO-BALL")
