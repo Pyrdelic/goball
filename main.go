@@ -22,6 +22,8 @@ type Game struct {
 	lives  int
 }
 
+// asdf
+
 // Detects a general collision between two Rects
 func isColliding(a *entities.Rect, b *entities.Rect) bool {
 	// x axis
