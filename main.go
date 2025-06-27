@@ -7,7 +7,6 @@ import (
 
 	"image/color"
 	"log"
-	"slices"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -18,10 +17,10 @@ import (
 
 type Game struct {
 	paddle entities.Paddle
-	bricks []entities.Brick
-	ball   entities.Ball
-	lives  int
-	level  *level.Level
+	//bricks []entities.Brick
+	ball  entities.Ball
+	lives int
+	level *level.Level
 }
 
 // Detects a general collision between two Rects
@@ -66,47 +65,93 @@ func (g *Game) Update() error {
 
 	alreadyBouncedBrick := false // prevents bounce cancellation if multiple collision
 	// brick collisions
-	for i := range g.bricks {
-		if isColliding(&g.ball.Rect, &g.bricks[i].Rect) {
-			// collision detected
-
-			// calculate collision lengths x, y to determine x (L, R) or y (T, B) sided bounce
-			if !alreadyBouncedBrick {
-				var xCollisionLength, yCollisionLength float64
-				// xCollisionLength
-				if g.ball.Rect.X < g.bricks[i].Rect.X {
-					xCollisionLength = g.ball.Rect.X + g.ball.Rect.W - g.bricks[i].Rect.X
-				} else {
-					xCollisionLength = g.bricks[i].Rect.X + g.bricks[i].Rect.X - g.ball.Rect.X
-				}
-				// yCollisionLength
-				if g.ball.Rect.Y < g.bricks[i].Rect.Y {
-					yCollisionLength = g.ball.Rect.Y + g.ball.Rect.W - g.bricks[i].Rect.Y
-				} else {
-					yCollisionLength = g.bricks[i].Rect.Y + g.bricks[i].Rect.H - g.ball.Rect.Y
-				}
-
-				if xCollisionLength >= yCollisionLength {
-					// top / bottom collision
-					g.ball.SpeedY = -g.ball.SpeedY
-					alreadyBouncedBrick = true
-				} else {
-					// side collision
-					g.ball.SpeedX = -g.ball.SpeedX
-					alreadyBouncedBrick = true
-				}
+	for iRow := 0; iRow < config.BrickRowCount; iRow++ {
+		for iColumn := 0; iColumn < config.BrickColumnCount; iColumn++ {
+			if g.level.Bricks[iRow][iColumn] == nil {
+				continue
 			}
-			g.bricks[i].Health--
+			if isColliding(&g.ball.Rect, &g.level.Bricks[iRow][iColumn].Rect) {
+				// collision detected
+				collidedBrick := g.level.Bricks[iRow][iColumn]
+				// calculate collision lengths x, y to determine x (L, R) or y (T, B) sided bounce
+				if !alreadyBouncedBrick {
+					var xCollisionLength, yCollisionLength float64
+					// xCollisionLength
+					if g.ball.Rect.X < collidedBrick.Rect.X {
+						xCollisionLength = g.ball.Rect.X + g.ball.Rect.W - collidedBrick.Rect.X
+					} else {
+						xCollisionLength = collidedBrick.Rect.X + collidedBrick.Rect.X - g.ball.Rect.X
+					}
+					// yCollisionLength
+					if g.ball.Rect.Y < collidedBrick.Rect.Y {
+						yCollisionLength = g.ball.Rect.Y + g.ball.Rect.W - collidedBrick.Rect.Y
+					} else {
+						yCollisionLength = collidedBrick.Rect.Y + collidedBrick.Rect.H - g.ball.Rect.Y
+					}
+
+					if xCollisionLength >= yCollisionLength {
+						// top / bottom collision
+						g.ball.SpeedY = -g.ball.SpeedY
+						alreadyBouncedBrick = true
+					} else {
+						// side collision
+						g.ball.SpeedX = -g.ball.SpeedX
+						alreadyBouncedBrick = true
+					}
+				}
+				collidedBrick.Health--
+			}
 		}
+		// if isColliding(&g.ball.Rect, &g.bricks[i].Rect) {
+		// 	// collision detected
+
+		// 	// calculate collision lengths x, y to determine x (L, R) or y (T, B) sided bounce
+		// 	if !alreadyBouncedBrick {
+		// 		var xCollisionLength, yCollisionLength float64
+		// 		// xCollisionLength
+		// 		if g.ball.Rect.X < g.bricks[i].Rect.X {
+		// 			xCollisionLength = g.ball.Rect.X + g.ball.Rect.W - g.bricks[i].Rect.X
+		// 		} else {
+		// 			xCollisionLength = g.bricks[i].Rect.X + g.bricks[i].Rect.X - g.ball.Rect.X
+		// 		}
+		// 		// yCollisionLength
+		// 		if g.ball.Rect.Y < g.bricks[i].Rect.Y {
+		// 			yCollisionLength = g.ball.Rect.Y + g.ball.Rect.W - g.bricks[i].Rect.Y
+		// 		} else {
+		// 			yCollisionLength = g.bricks[i].Rect.Y + g.bricks[i].Rect.H - g.ball.Rect.Y
+		// 		}
+
+		// 		if xCollisionLength >= yCollisionLength {
+		// 			// top / bottom collision
+		// 			g.ball.SpeedY = -g.ball.SpeedY
+		// 			alreadyBouncedBrick = true
+		// 		} else {
+		// 			// side collision
+		// 			g.ball.SpeedX = -g.ball.SpeedX
+		// 			alreadyBouncedBrick = true
+		// 		}
+		// 	}
+		// 	g.bricks[i].Health--
+		// }
 	}
 	// destroy bricks with 0 or less health
-	g.bricks = slices.DeleteFunc(g.bricks, func(b entities.Brick) bool {
-		if b.Health <= 0 {
-			return true
-		} else {
-			return false
+	for iRow := 0; iRow < config.BrickRowCount; iRow++ {
+		for iColumn := 0; iColumn < config.BrickColumnCount; iColumn++ {
+			if g.level.Bricks[iRow][iColumn] == nil {
+				continue
+			}
+			if g.level.Bricks[iRow][iColumn].Health <= 0 {
+				g.level.Bricks[iRow][iColumn] = nil
+			}
 		}
-	})
+	}
+	// g.level.Bricks = slices.DeleteFunc(g.level.Bricks, func(b entities.Brick) bool {
+	// 	if b.Health <= 0 {
+	// 		return true
+	// 	} else {
+	// 		return false
+	// 	}
+	// })
 
 	// wall collisions & bounce
 	// left wall
@@ -170,9 +215,9 @@ func (g *Game) Update() error {
 		}
 	}
 
-	for i := range g.bricks {
-		g.bricks[i].Update()
-	}
+	// for i := range g.bricks {
+	// 	g.bricks[i].Update()
+	// }
 
 	g.paddle.Update()
 
@@ -187,9 +232,14 @@ func (g *Game) Update() error {
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	//ebitenutil.DebugPrint(screen, "Hello, World!")
-	for i := range g.bricks {
-		g.bricks[i].Draw(screen)
+	for iRow := 0; iRow < config.BrickRowCount; iRow++ {
+		for iColumn := 0; iColumn < config.BrickColumnCount; iColumn++ {
+			g.level.Bricks[iRow][iColumn].Draw(screen)
+		}
 	}
+	// for i := range g.bricks {
+	// 	g.bricks[i].Draw(screen)
+	// }
 	g.paddle.Draw(screen)
 	g.ball.Draw(screen)
 	ebitenutil.DebugPrint(screen, fmt.Sprintf("lives: %d", g.lives))
@@ -247,41 +297,41 @@ func main() {
 	game.ball.Image = ebiten.NewImage(int(game.ball.Rect.W), int(game.ball.Rect.H))
 	game.ball.Image.Fill(color.White)
 
-	// init bricks
-	if true {
-		for iBrickRow := 0; iBrickRow < config.BrickRowCount; iBrickRow++ {
-			for iBrickColumn := 0; iBrickColumn < config.BrickColumnCount; iBrickColumn++ {
-				brick := entities.Brick{}
-				brick.Health = 1
-				brick.Rect.X = float64(iBrickColumn * config.BrickWidth)
-				brick.Rect.Y = float64(iBrickRow * config.BrickHeight)
-				brick.Rect.W = config.BrickWidth
-				brick.Rect.H = config.BrickHeight
-				brick.Image = ebiten.NewImage(int(brick.Rect.W), int(brick.Rect.H))
-				brick.Image.Fill(color.RGBA{
-					R: uint8(iBrickRow * 25),
-					G: uint8(iBrickColumn * 10),
-					B: uint8(127),
-					A: uint8(255),
-				})
-				game.bricks = append(game.bricks, brick)
-			}
-		}
-	} else { // testing stuff
-		brick := entities.Brick{}
-		brick.Rect.X = 200
-		brick.Rect.Y = 100
-		brick.Rect.W = config.BrickWidth
-		brick.Rect.H = config.BrickHeight
-		brick.Image = ebiten.NewImage(int(brick.Rect.W), int(brick.Rect.H))
-		brick.Image.Fill(color.RGBA{
-			R: uint8(127),
-			G: uint8(127),
-			B: uint8(127),
-			A: uint8(255),
-		})
-		game.bricks = append(game.bricks, brick)
-	}
+	// // init bricks
+	// if true {
+	// 	for iBrickRow := 0; iBrickRow < config.BrickRowCount; iBrickRow++ {
+	// 		for iBrickColumn := 0; iBrickColumn < config.BrickColumnCount; iBrickColumn++ {
+	// 			brick := entities.Brick{}
+	// 			brick.Health = 1
+	// 			brick.Rect.X = float64(iBrickColumn * config.BrickWidth)
+	// 			brick.Rect.Y = float64(iBrickRow * config.BrickHeight)
+	// 			brick.Rect.W = config.BrickWidth
+	// 			brick.Rect.H = config.BrickHeight
+	// 			brick.Image = ebiten.NewImage(int(brick.Rect.W), int(brick.Rect.H))
+	// 			brick.Image.Fill(color.RGBA{
+	// 				R: uint8(iBrickRow * 25),
+	// 				G: uint8(iBrickColumn * 10),
+	// 				B: uint8(127),
+	// 				A: uint8(255),
+	// 			})
+	// 			game.bricks = append(game.bricks, brick)
+	// 		}
+	// 	}
+	// } else { // testing stuff
+	// 	brick := entities.Brick{}
+	// 	brick.Rect.X = 200
+	// 	brick.Rect.Y = 100
+	// 	brick.Rect.W = config.BrickWidth
+	// 	brick.Rect.H = config.BrickHeight
+	// 	brick.Image = ebiten.NewImage(int(brick.Rect.W), int(brick.Rect.H))
+	// 	brick.Image.Fill(color.RGBA{
+	// 		R: uint8(127),
+	// 		G: uint8(127),
+	// 		B: uint8(127),
+	// 		A: uint8(255),
+	// 	})
+	// 	game.bricks = append(game.bricks, brick)
+	// }
 
 	ebiten.SetVsyncEnabled(false)
 	ebiten.SetCursorMode(ebiten.CursorModeHidden)

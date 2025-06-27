@@ -78,6 +78,9 @@ func (b *Brick) Update() {
 }
 
 func (b *Brick) Draw(screen *ebiten.Image) {
+	if b == nil {
+		return
+	}
 	DIO := ebiten.DrawImageOptions{}
 	DIO.GeoM.Translate(float64(b.Rect.X), float64(b.Rect.Y)) // ??
 	screen.DrawImage(b.Image, &DIO)
