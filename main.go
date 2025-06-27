@@ -18,9 +18,10 @@ import (
 type Game struct {
 	paddle entities.Paddle
 	//bricks []entities.Brick
-	ball  entities.Ball
-	lives int
-	level *level.Level
+	ball         entities.Ball
+	lives        int
+	level        *level.Level
+	currLevelNum int
 }
 
 // Detects a general collision between two Rects
@@ -99,42 +100,12 @@ func (g *Game) Update() error {
 						alreadyBouncedBrick = true
 					}
 				}
+				g.level.TotalHealth--
 				collidedBrick.Health--
 			}
 		}
-		// if isColliding(&g.ball.Rect, &g.bricks[i].Rect) {
-		// 	// collision detected
-
-		// 	// calculate collision lengths x, y to determine x (L, R) or y (T, B) sided bounce
-		// 	if !alreadyBouncedBrick {
-		// 		var xCollisionLength, yCollisionLength float64
-		// 		// xCollisionLength
-		// 		if g.ball.Rect.X < g.bricks[i].Rect.X {
-		// 			xCollisionLength = g.ball.Rect.X + g.ball.Rect.W - g.bricks[i].Rect.X
-		// 		} else {
-		// 			xCollisionLength = g.bricks[i].Rect.X + g.bricks[i].Rect.X - g.ball.Rect.X
-		// 		}
-		// 		// yCollisionLength
-		// 		if g.ball.Rect.Y < g.bricks[i].Rect.Y {
-		// 			yCollisionLength = g.ball.Rect.Y + g.ball.Rect.W - g.bricks[i].Rect.Y
-		// 		} else {
-		// 			yCollisionLength = g.bricks[i].Rect.Y + g.bricks[i].Rect.H - g.ball.Rect.Y
-		// 		}
-
-		// 		if xCollisionLength >= yCollisionLength {
-		// 			// top / bottom collision
-		// 			g.ball.SpeedY = -g.ball.SpeedY
-		// 			alreadyBouncedBrick = true
-		// 		} else {
-		// 			// side collision
-		// 			g.ball.SpeedX = -g.ball.SpeedX
-		// 			alreadyBouncedBrick = true
-		// 		}
-		// 	}
-		// 	g.bricks[i].Health--
-		// }
 	}
-	// destroy bricks with 0 or less health
+	// destroy bricks with 0 or less health, decrease level.TotalHealth
 	for iRow := 0; iRow < config.BrickRowCount; iRow++ {
 		for iColumn := 0; iColumn < config.BrickColumnCount; iColumn++ {
 			if g.level.Bricks[iRow][iColumn] == nil {
@@ -227,6 +198,11 @@ func (g *Game) Update() error {
 		g.ball.Rect.X = g.paddle.Rect.X
 	}
 
+	if g.level.TotalHealth <= 0 {
+		g.currLevelNum++
+		g.level = level.NewLevel(g.currLevelNum)
+	}
+
 	return nil
 }
 
@@ -242,7 +218,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	// }
 	g.paddle.Draw(screen)
 	g.ball.Draw(screen)
-	ebitenutil.DebugPrint(screen, fmt.Sprintf("lives: %d", g.lives))
+	ebitenutil.DebugPrint(screen, fmt.Sprintf(
+		"lives: %d\nlvl health: %d",
+		g.lives,
+		g.level.TotalHealth))
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
@@ -270,7 +249,8 @@ func main() {
 	ebiten.SetWindowTitle("GO-BALL")
 
 	game := Game{}
-	game.level = level.NewLevel(1)
+	game.currLevelNum = 1
+	game.level = level.NewLevel(game.currLevelNum)
 	game.level.PrintLevel()
 	// init paddle
 	cursorX, _ := ebiten.CursorPosition()
@@ -296,42 +276,6 @@ func main() {
 
 	game.ball.Image = ebiten.NewImage(int(game.ball.Rect.W), int(game.ball.Rect.H))
 	game.ball.Image.Fill(color.White)
-
-	// // init bricks
-	// if true {
-	// 	for iBrickRow := 0; iBrickRow < config.BrickRowCount; iBrickRow++ {
-	// 		for iBrickColumn := 0; iBrickColumn < config.BrickColumnCount; iBrickColumn++ {
-	// 			brick := entities.Brick{}
-	// 			brick.Health = 1
-	// 			brick.Rect.X = float64(iBrickColumn * config.BrickWidth)
-	// 			brick.Rect.Y = float64(iBrickRow * config.BrickHeight)
-	// 			brick.Rect.W = config.BrickWidth
-	// 			brick.Rect.H = config.BrickHeight
-	// 			brick.Image = ebiten.NewImage(int(brick.Rect.W), int(brick.Rect.H))
-	// 			brick.Image.Fill(color.RGBA{
-	// 				R: uint8(iBrickRow * 25),
-	// 				G: uint8(iBrickColumn * 10),
-	// 				B: uint8(127),
-	// 				A: uint8(255),
-	// 			})
-	// 			game.bricks = append(game.bricks, brick)
-	// 		}
-	// 	}
-	// } else { // testing stuff
-	// 	brick := entities.Brick{}
-	// 	brick.Rect.X = 200
-	// 	brick.Rect.Y = 100
-	// 	brick.Rect.W = config.BrickWidth
-	// 	brick.Rect.H = config.BrickHeight
-	// 	brick.Image = ebiten.NewImage(int(brick.Rect.W), int(brick.Rect.H))
-	// 	brick.Image.Fill(color.RGBA{
-	// 		R: uint8(127),
-	// 		G: uint8(127),
-	// 		B: uint8(127),
-	// 		A: uint8(255),
-	// 	})
-	// 	game.bricks = append(game.bricks, brick)
-	// }
 
 	ebiten.SetVsyncEnabled(false)
 	ebiten.SetCursorMode(ebiten.CursorModeHidden)

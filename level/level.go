@@ -62,6 +62,7 @@ func (l *Level) LoadFromFile(path string) {
 					G: uint8(255),
 					B: uint8(64),
 					A: uint8(255)})
+				l.TotalHealth += brick.Health
 				l.Bricks[iRow][iColumn] = &brick
 
 				// default to no brick
@@ -78,7 +79,7 @@ func (l *Level) LoadFromFile(path string) {
 // returns a pointer to a new level, based on the level number.
 func NewLevel(levelNumber int) *Level {
 	level := Level{}
-	levelPath := fmt.Sprintf("level%d.txt", levelNumber)
+	levelPath := fmt.Sprintf("levels/level%d.txt", levelNumber)
 	fmt.Println("Loading level from file:", levelPath)
 	level.LoadFromFile(levelPath)
 	return &level

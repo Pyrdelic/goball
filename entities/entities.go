@@ -87,12 +87,12 @@ func (b *Brick) Draw(screen *ebiten.Image) {
 	//fmt.Printf("%+v\n", p)
 }
 
-// returns a pointer to a new brick.
-func NewBrick(brickType int, row int, column int) *Brick {
-	brick := Brick{}
-	brick.Rect = Rect{}
-	return &brick
-}
+// // returns a pointer to a new brick.
+// func NewBrick(brickType int, row int, column int) *Brick {
+// 	brick := Brick{}
+// 	brick.Rect = Rect{}
+// 	return &brick
+// }
 
 // BRICK ^^^^^^
 
