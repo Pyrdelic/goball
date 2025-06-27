@@ -17,11 +17,11 @@ import (
 )
 
 type Game struct {
-	paddle    entities.Paddle
-	bricks    []entities.Brick
-	ball      entities.Ball
-	lives     int
-	currLevel level.Level
+	paddle entities.Paddle
+	bricks []entities.Brick
+	ball   entities.Ball
+	lives  int
+	level  *level.Level
 }
 
 // Detects a general collision between two Rects
@@ -220,7 +220,8 @@ func main() {
 	ebiten.SetWindowTitle("GO-BALL")
 
 	game := Game{}
-
+	game.level = level.NewLevel(1)
+	game.level.PrintLevel()
 	// init paddle
 	cursorX, _ := ebiten.CursorPosition()
 	game.lives = config.StartingLives

@@ -56,10 +56,18 @@ func (p *Paddle) Draw(screen *ebiten.Image) {
 // PADDLE ^^^^^
 
 // BRICK vvvvvv
+
+const (
+	BrikcTypeNone           = 0
+	BrickTypeBasic          = 1
+	BrickTypeIndestructible = 2
+)
+
 type Brick struct {
-	Image  *ebiten.Image
-	Rect   Rect
-	Health int
+	Image     *ebiten.Image
+	Rect      Rect
+	Health    int
+	BrickType int
 	Updater
 	Drawer
 	//Entity
@@ -74,6 +82,13 @@ func (b *Brick) Draw(screen *ebiten.Image) {
 	DIO.GeoM.Translate(float64(b.Rect.X), float64(b.Rect.Y)) // ??
 	screen.DrawImage(b.Image, &DIO)
 	//fmt.Printf("%+v\n", p)
+}
+
+// returns a pointer to a new brick.
+func NewBrick(brickType int, row int, column int) *Brick {
+	brick := Brick{}
+	brick.Rect = Rect{}
+	return &brick
 }
 
 // BRICK ^^^^^^
