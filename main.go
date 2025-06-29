@@ -58,6 +58,16 @@ func (g *Game) Update() error {
 		return ErrTerminated
 	}
 	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
+		for _, b := range g.balls {
+			if b == nil {
+				continue
+			}
+			b.Grabbed = false
+			// make sure the ball launches upwards
+			if b.SpeedY > 0 {
+				b.SpeedY = -b.SpeedY
+			}
+		}
 		g.ball.Grabbed = false
 		if g.ball.SpeedY > 0 {
 			// launch upwards
@@ -126,6 +136,29 @@ func (g *Game) Update() error {
 	// })
 
 	// wall collisions & bounce
+	for _, b := range g.balls {
+		if b == nil {
+			continue
+		}
+		// left wall
+		if b.Rect.X <= 0 && b.SpeedX < 0 {
+			b.SpeedX = -b.SpeedX
+		}
+		// right wall
+		if b.Rect.X+b.Rect.W >= config.PlayAreaWidth && b.SpeedX > 0 {
+			b.SpeedX = -b.SpeedX
+		}
+		// ceiling
+		if b.Rect.Y <= 0 && b.SpeedY < 0 {
+			b.SpeedY = -b.SpeedY
+		}
+		// floor
+		if b.Rect.Y+b.Rect.H >= config.PlayAreaHeight && b.SpeedY > 0 {
+			// TODO: destroy ball
+			b.SpeedY = -b.SpeedY
+		}
+	}
+
 	// left wall
 	if g.ball.Rect.X <= 0 && g.ball.SpeedX < 0 {
 		g.ball.SpeedX = -g.ball.SpeedX
@@ -145,47 +178,86 @@ func (g *Game) Update() error {
 	}
 
 	// Paddle collisions & bounce
-	if isColliding(&g.ball.Rect, &g.paddle.Rect) {
-		// Ball's bounce angle is determined by the point
-		// of collision on the paddle.
-		ballCenterX := g.ball.Rect.X + g.ball.Rect.W/2
-
-		// segmented determination of bounce (launch) angle
+	for _, b := range g.balls {
+		if b == nil {
+			continue
+		}
+		if !isColliding(&b.Rect, &g.paddle.Rect) {
+			continue
+		}
+		ballCenterX := b.Rect.X + b.Rect.W/2
+		fmt.Println("Ball centerX:", ballCenterX)
 		segmentAngleDegrees := 22.5
 		paddleSegmentLenX := g.paddle.Rect.W / 6
-		if ballCenterX < g.paddle.Rect.X+paddleSegmentLenX {
-			fmt.Println("hit segment 1") // works
-			g.ball.SpeedX, g.ball.SpeedY = speedXYForAngle(
-				g.ball.SpeedBase,
-				360.0-(segmentAngleDegrees/2.0)-(segmentAngleDegrees*2))
-		} else if ballCenterX < g.paddle.Rect.X+paddleSegmentLenX*2 {
-			fmt.Println("hit segment 2") // works
-			g.ball.SpeedX, g.ball.SpeedY = speedXYForAngle(g.ball.SpeedBase,
-				360.0-(segmentAngleDegrees/2.0)-segmentAngleDegrees)
-		} else if ballCenterX < g.paddle.Rect.X+paddleSegmentLenX*3 {
-			fmt.Println("hit segment 3 ") // launches straight up, why?
-			g.ball.SpeedX, g.ball.SpeedY = speedXYForAngle(g.ball.SpeedBase,
-				360.0-(segmentAngleDegrees/2.0))
-			fmt.Println(360.0 - (segmentAngleDegrees / 2.0))
-		} else if ballCenterX < g.paddle.Rect.X+paddleSegmentLenX*4 {
-			fmt.Println("hit segment 4") // launches straight up, why?
-			g.ball.SpeedX, g.ball.SpeedY = speedXYForAngle(g.ball.SpeedBase,
-				segmentAngleDegrees/2.0)
-		} else if ballCenterX < g.paddle.Rect.X+paddleSegmentLenX*5 {
-			fmt.Println("hit segment 5") // works
-			g.ball.SpeedX, g.ball.SpeedY = speedXYForAngle(g.ball.SpeedBase,
-				(segmentAngleDegrees/2.0)+segmentAngleDegrees)
-		} else {
-			fmt.Println("hit segment 6") // works
-			g.ball.SpeedX, g.ball.SpeedY = speedXYForAngle(g.ball.SpeedBase,
-				(segmentAngleDegrees/2.0)+segmentAngleDegrees*2)
-		}
-		fmt.Println(segmentAngleDegrees, segmentAngleDegrees/2.0)
+		fmt.Println("paddleSegmentLenx:", paddleSegmentLenX)
 
-		if g.ball.SpeedY > 0 {
-			g.ball.SpeedY = -g.ball.SpeedY
+		if ballCenterX < g.paddle.Rect.X+paddleSegmentLenX {
+			fmt.Println("multiball hit segment: 1")
+			b.CalcXYForAngle(360.0 - segmentAngleDegrees*2 - segmentAngleDegrees/2.0)
+		} else if ballCenterX < g.paddle.Rect.X+paddleSegmentLenX*2 {
+			fmt.Println("multiball hit segment: 2")
+			b.CalcXYForAngle(360.0 - segmentAngleDegrees - segmentAngleDegrees/2.0)
+		} else if ballCenterX < g.paddle.Rect.X+paddleSegmentLenX*3 {
+			fmt.Println("multiball hit segment: 3")
+			b.CalcXYForAngle(360.0 - segmentAngleDegrees/2.0)
+		} else if ballCenterX < g.paddle.Rect.X+paddleSegmentLenX*4 {
+			fmt.Println("multiball hit segment: 4")
+			b.CalcXYForAngle(segmentAngleDegrees / 2.0)
+		} else if ballCenterX < g.paddle.Rect.X+paddleSegmentLenX*5 {
+			fmt.Println("multiball hit segment: 5")
+			b.CalcXYForAngle(segmentAngleDegrees + segmentAngleDegrees/2.0)
+		} else {
+			fmt.Println("multiball hit segment: 6")
+			b.CalcXYForAngle(segmentAngleDegrees*2 + segmentAngleDegrees/2.0)
 		}
+		fmt.Println("Ball sX, sY:", b.SpeedX, b.SpeedY)
+		// ensure that the ball bounces upwards
+		if b.SpeedY > 0 {
+			b.SpeedY = -b.SpeedY
+		}
+
 	}
+	// if isColliding(&g.ball.Rect, &g.paddle.Rect) {
+	// 	// Ball's bounce angle is determined by the point
+	// 	// of collision on the paddle.
+	// 	ballCenterX := g.ball.Rect.X + g.ball.Rect.W/2.0
+
+	// 	// segmented determination of bounce (launch) angle
+	// 	segmentAngleDegrees := 22.5
+	// 	paddleSegmentLenX := g.paddle.Rect.W / 6
+	// 	if ballCenterX < g.paddle.Rect.X+paddleSegmentLenX {
+	// 		fmt.Println("hit segment 1") // works
+	// 		g.ball.SpeedX, g.ball.SpeedY = speedXYForAngle(
+	// 			g.ball.SpeedBase,
+	// 			360.0-(segmentAngleDegrees/2.0)-(segmentAngleDegrees*2))
+	// 	} else if ballCenterX < g.paddle.Rect.X+paddleSegmentLenX*2 {
+	// 		fmt.Println("hit segment 2") // works
+	// 		g.ball.SpeedX, g.ball.SpeedY = speedXYForAngle(g.ball.SpeedBase,
+	// 			360.0-(segmentAngleDegrees/2.0)-segmentAngleDegrees)
+	// 	} else if ballCenterX < g.paddle.Rect.X+paddleSegmentLenX*3 {
+	// 		fmt.Println("hit segment 3 ") // launches straight up, why?
+	// 		g.ball.SpeedX, g.ball.SpeedY = speedXYForAngle(g.ball.SpeedBase,
+	// 			360.0-(segmentAngleDegrees/2.0))
+	// 		fmt.Println(360.0 - (segmentAngleDegrees / 2.0))
+	// 	} else if ballCenterX < g.paddle.Rect.X+paddleSegmentLenX*4 {
+	// 		fmt.Println("hit segment 4") // launches straight up, why?
+	// 		g.ball.SpeedX, g.ball.SpeedY = speedXYForAngle(g.ball.SpeedBase,
+	// 			segmentAngleDegrees/2.0)
+	// 	} else if ballCenterX < g.paddle.Rect.X+paddleSegmentLenX*5 {
+	// 		fmt.Println("hit segment 5") // works
+	// 		g.ball.SpeedX, g.ball.SpeedY = speedXYForAngle(g.ball.SpeedBase,
+	// 			(segmentAngleDegrees/2.0)+segmentAngleDegrees)
+	// 	} else {
+	// 		fmt.Println("hit segment 6") // works
+	// 		g.ball.SpeedX, g.ball.SpeedY = speedXYForAngle(g.ball.SpeedBase,
+	// 			(segmentAngleDegrees/2.0)+segmentAngleDegrees*2)
+	// 	}
+	// 	fmt.Println(segmentAngleDegrees, segmentAngleDegrees/2.0)
+
+	// 	if g.ball.SpeedY > 0 {
+	// 		g.ball.SpeedY = -g.ball.SpeedY
+	// 	}
+	// }
 
 	// for i := range g.bricks {
 	// 	g.bricks[i].Update()
