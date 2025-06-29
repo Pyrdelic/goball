@@ -19,6 +19,7 @@ type Game struct {
 	paddle entities.Paddle
 	//bricks []entities.Brick
 	ball         entities.Ball
+	balls        [config.BallMaxCount]*entities.Ball
 	lives        int
 	level        *level.Level
 	currLevelNum int
@@ -155,28 +156,28 @@ func (g *Game) Update() error {
 		if ballCenterX < g.paddle.Rect.X+paddleSegmentLenX {
 			fmt.Println("hit segment 1") // works
 			g.ball.SpeedX, g.ball.SpeedY = speedXYForAngle(
-				g.ball.SpeedMultiplier,
+				g.ball.SpeedBase,
 				360.0-(segmentAngleDegrees/2.0)-(segmentAngleDegrees*2))
 		} else if ballCenterX < g.paddle.Rect.X+paddleSegmentLenX*2 {
 			fmt.Println("hit segment 2") // works
-			g.ball.SpeedX, g.ball.SpeedY = speedXYForAngle(g.ball.SpeedMultiplier,
+			g.ball.SpeedX, g.ball.SpeedY = speedXYForAngle(g.ball.SpeedBase,
 				360.0-(segmentAngleDegrees/2.0)-segmentAngleDegrees)
 		} else if ballCenterX < g.paddle.Rect.X+paddleSegmentLenX*3 {
 			fmt.Println("hit segment 3 ") // launches straight up, why?
-			g.ball.SpeedX, g.ball.SpeedY = speedXYForAngle(g.ball.SpeedMultiplier,
+			g.ball.SpeedX, g.ball.SpeedY = speedXYForAngle(g.ball.SpeedBase,
 				360.0-(segmentAngleDegrees/2.0))
 			fmt.Println(360.0 - (segmentAngleDegrees / 2.0))
 		} else if ballCenterX < g.paddle.Rect.X+paddleSegmentLenX*4 {
 			fmt.Println("hit segment 4") // launches straight up, why?
-			g.ball.SpeedX, g.ball.SpeedY = speedXYForAngle(g.ball.SpeedMultiplier,
+			g.ball.SpeedX, g.ball.SpeedY = speedXYForAngle(g.ball.SpeedBase,
 				segmentAngleDegrees/2.0)
 		} else if ballCenterX < g.paddle.Rect.X+paddleSegmentLenX*5 {
 			fmt.Println("hit segment 5") // works
-			g.ball.SpeedX, g.ball.SpeedY = speedXYForAngle(g.ball.SpeedMultiplier,
+			g.ball.SpeedX, g.ball.SpeedY = speedXYForAngle(g.ball.SpeedBase,
 				(segmentAngleDegrees/2.0)+segmentAngleDegrees)
 		} else {
 			fmt.Println("hit segment 6") // works
-			g.ball.SpeedX, g.ball.SpeedY = speedXYForAngle(g.ball.SpeedMultiplier,
+			g.ball.SpeedX, g.ball.SpeedY = speedXYForAngle(g.ball.SpeedBase,
 				(segmentAngleDegrees/2.0)+segmentAngleDegrees*2)
 		}
 		fmt.Println(segmentAngleDegrees, segmentAngleDegrees/2.0)
@@ -191,6 +192,18 @@ func (g *Game) Update() error {
 	// }
 
 	g.paddle.Update()
+
+	// update balls
+	for _, b := range g.balls {
+		if b == nil {
+			continue
+		}
+		if b.Grabbed {
+			b.Rect.X = g.paddle.Rect.X
+		} else {
+			b.Update()
+		}
+	}
 
 	if !g.ball.Grabbed {
 		g.ball.Update()
@@ -218,6 +231,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	// }
 	g.paddle.Draw(screen)
 	g.ball.Draw(screen)
+	for _, b := range g.balls {
+		b.Draw(screen)
+	}
 	ebitenutil.DebugPrint(screen, fmt.Sprintf(
 		"lives: %d\nlvl health: %d",
 		g.lives,
@@ -249,6 +265,15 @@ func main() {
 	ebiten.SetWindowTitle("GO-BALL")
 
 	game := Game{}
+
+	game.balls[0] = entities.NewBall(
+		100.0,
+		100.0,
+		config.BallStartingSpeed,
+		config.BallStartingAngle,
+		true,
+	)
+
 	game.currLevelNum = 1
 	game.level = level.NewLevel(game.currLevelNum)
 	game.level.PrintLevel()
@@ -269,9 +294,9 @@ func main() {
 	game.ball.Rect.W = config.BallSize
 	game.ball.Rect.H = config.BallSize
 	//game.ball.Speed = -2
-	game.ball.SpeedMultiplier = config.BallStartingSpeed
+	game.ball.SpeedBase = config.BallStartingSpeed
 	game.ball.SpeedX, game.ball.SpeedY = speedXYForAngle(
-		game.ball.SpeedMultiplier, 360.0-12.75)
+		game.ball.SpeedBase, 360.0-12.75)
 	game.ball.Grabbed = true
 
 	game.ball.Image = ebiten.NewImage(int(game.ball.Rect.W), int(game.ball.Rect.H))

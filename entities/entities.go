@@ -1,6 +1,9 @@
 package entities
 
 import (
+	"image/color"
+	"math"
+
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/pyrdelic/goball/config"
 )
@@ -101,9 +104,9 @@ type Ball struct {
 	Image *ebiten.Image
 	Rect  Rect
 	//Speed          int
-	SpeedMultiplier float64
-	SpeedX, SpeedY  float64
-	Grabbed         bool
+	SpeedBase      float64
+	SpeedX, SpeedY float64
+	Grabbed        bool
 	// TODO: direction
 	Updater
 	Drawer
@@ -111,6 +114,9 @@ type Ball struct {
 }
 
 func (b *Ball) Update() {
+	if b == nil {
+		return
+	}
 	//b.Rect.Y = b.Rect.Y + b.Speed
 	if !b.Grabbed {
 		b.Rect.Y = b.Rect.Y + b.SpeedY
@@ -119,9 +125,46 @@ func (b *Ball) Update() {
 }
 
 func (b *Ball) Draw(screen *ebiten.Image) {
+	if b == nil {
+		return
+	}
 	DIO := ebiten.DrawImageOptions{}
 	DIO.GeoM.Translate(float64(b.Rect.X), float64(b.Rect.Y)) // ??
 	screen.DrawImage(b.Image, &DIO)
+}
+
+// Sets a Ball SpeedX, SpeedY for a given angle (degrees).
+func (b *Ball) CalcXYForAngle(angle float64) {
+	if b == nil {
+		return
+	}
+	radian := angle * (math.Pi / 180)
+	b.SpeedX = b.SpeedBase * math.Sin(radian)
+	// flip Y component to correct for game space coordinate system
+	b.SpeedY = -(b.SpeedBase * math.Cos(radian))
+}
+
+// NewBall Returns a pointer to a new Ball.
+func NewBall(x, y, speedBase, angle float64, grabbed bool) *Ball {
+	ball := Ball{}
+	ball.Grabbed = grabbed
+	ball.SpeedBase = speedBase
+	//ball.SpeedX, ball.SpeedY = speedXYForAngle(angle)
+	rect := Rect{}
+	rect.X = x
+	rect.Y = y
+	rect.W = config.BallSize
+	rect.H = config.BallSize
+	ball.Rect = rect
+	ball.Image = ebiten.NewImage(int(ball.Rect.W), int(ball.Rect.H))
+	ball.Image.Fill(color.RGBA{
+		R: 0,
+		G: 255,
+		B: 0,
+		A: 255,
+	})
+	ball.CalcXYForAngle(angle)
+	return &ball
 }
 
 // BALL ^^^^^^
