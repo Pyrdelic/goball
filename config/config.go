@@ -16,8 +16,8 @@ const (
 
 	BallStartingSpeed = 2.0
 	BallSize          = 5.0
-	BallMaxCount
+	BallMaxCount      = 4
 	BallStartingAngle = 360.0 - 12.75
 
-	GodMode = true
+	GodMode = false
 )
