@@ -18,7 +18,7 @@ import (
 type Game struct {
 	paddle entities.Paddle
 	//bricks []entities.Brick
-	ball         entities.Ball
+	//ball         entities.Ball
 	balls        [config.BallMaxCount]*entities.Ball
 	lives        int
 	level        *level.Level
@@ -68,55 +68,59 @@ func (g *Game) Update() error {
 				b.SpeedY = -b.SpeedY
 			}
 		}
-		g.ball.Grabbed = false
-		if g.ball.SpeedY > 0 {
-			// launch upwards
-			g.ball.SpeedY = -g.ball.SpeedY
-		}
 	}
 
 	alreadyBouncedBrick := false // prevents bounce cancellation if multiple collision
 	// brick collisions
-	for iRow := 0; iRow < config.BrickRowCount; iRow++ {
-		for iColumn := 0; iColumn < config.BrickColumnCount; iColumn++ {
-			if g.level.Bricks[iRow][iColumn] == nil {
-				continue
-			}
-			if isColliding(&g.ball.Rect, &g.level.Bricks[iRow][iColumn].Rect) {
-				// collision detected
-				collidedBrick := g.level.Bricks[iRow][iColumn]
-				// calculate collision lengths x, y to determine x (L, R) or y (T, B) sided bounce
-				if !alreadyBouncedBrick {
-					var xCollisionLength, yCollisionLength float64
-					// xCollisionLength
-					if g.ball.Rect.X < collidedBrick.Rect.X {
-						xCollisionLength = g.ball.Rect.X + g.ball.Rect.W - collidedBrick.Rect.X
-					} else {
-						xCollisionLength = collidedBrick.Rect.X + collidedBrick.Rect.X - g.ball.Rect.X
-					}
-					// yCollisionLength
-					if g.ball.Rect.Y < collidedBrick.Rect.Y {
-						yCollisionLength = g.ball.Rect.Y + g.ball.Rect.W - collidedBrick.Rect.Y
-					} else {
-						yCollisionLength = collidedBrick.Rect.Y + collidedBrick.Rect.H - g.ball.Rect.Y
-					}
 
-					if xCollisionLength >= yCollisionLength {
-						// top / bottom collision
-						g.ball.SpeedY = -g.ball.SpeedY
-						alreadyBouncedBrick = true
-					} else {
-						// side collision
-						g.ball.SpeedX = -g.ball.SpeedX
-						alreadyBouncedBrick = true
-					}
+	for _, b := range g.balls {
+		if b == nil {
+			continue
+		}
+		for iRow := 0; iRow < config.BrickRowCount; iRow++ {
+			for iColumn := 0; iColumn < config.BrickColumnCount; iColumn++ {
+				if g.level.Bricks[iRow][iColumn] == nil {
+					continue
 				}
-				g.level.TotalHealth--
-				collidedBrick.Health--
+				if isColliding(&b.Rect, &g.level.Bricks[iRow][iColumn].Rect) {
+					collidedBrick := g.level.Bricks[iRow][iColumn]
+					// bounce if not already bounced (prevents bounce cancellation)
+					if !alreadyBouncedBrick {
+						// calculate collision lengts of x and y,
+						// this determines if the collision is x or y sided
+						// x
+						var xCollisionLength, yCollisionLength float64
+						if b.Rect.X < collidedBrick.Rect.X {
+							xCollisionLength = b.Rect.X + b.Rect.W - collidedBrick.Rect.X
+						} else {
+							xCollisionLength = collidedBrick.Rect.X + collidedBrick.Rect.X - b.Rect.X
+						}
+						// y
+						if b.Rect.Y < collidedBrick.Rect.Y {
+							yCollisionLength = b.Rect.Y + b.Rect.H - collidedBrick.Rect.Y
+						} else {
+							yCollisionLength = collidedBrick.Rect.Y + collidedBrick.Rect.H - b.Rect.Y
+						}
+
+						if xCollisionLength >= yCollisionLength {
+							// y-sided collision
+							b.SpeedY = -b.SpeedY
+							alreadyBouncedBrick = true
+						} else {
+							// x-sided collision
+							b.SpeedX = -b.SpeedX
+							alreadyBouncedBrick = true
+						}
+
+					}
+					collidedBrick.Health--
+					g.level.TotalHealth--
+				}
 			}
 		}
 	}
-	// destroy bricks with 0 or less health, decrease level.TotalHealth
+
+	// destroy bricks with 0 or less health
 	for iRow := 0; iRow < config.BrickRowCount; iRow++ {
 		for iColumn := 0; iColumn < config.BrickColumnCount; iColumn++ {
 			if g.level.Bricks[iRow][iColumn] == nil {
@@ -127,13 +131,6 @@ func (g *Game) Update() error {
 			}
 		}
 	}
-	// g.level.Bricks = slices.DeleteFunc(g.level.Bricks, func(b entities.Brick) bool {
-	// 	if b.Health <= 0 {
-	// 		return true
-	// 	} else {
-	// 		return false
-	// 	}
-	// })
 
 	// wall collisions & bounce
 	for _, b := range g.balls {
@@ -159,24 +156,6 @@ func (g *Game) Update() error {
 		}
 	}
 
-	// left wall
-	if g.ball.Rect.X <= 0 && g.ball.SpeedX < 0 {
-		g.ball.SpeedX = -g.ball.SpeedX
-	}
-	// right wall
-	if g.ball.Rect.X+g.ball.Rect.W >= config.PlayAreaWidth && g.ball.SpeedX > 0 {
-		g.ball.SpeedX = -g.ball.SpeedX
-	}
-	// ceiling
-	if g.ball.Rect.Y <= 0 && g.ball.SpeedY < 0 {
-		g.ball.SpeedY = -g.ball.SpeedY
-	}
-	// floor
-	if g.ball.Rect.Y+g.ball.Rect.W >= config.PlayAreaHeight && g.ball.SpeedY > 0 {
-		// TODO: lose a ball / lose a life / game over
-		g.ball.SpeedY = -g.ball.SpeedY
-	}
-
 	// Paddle collisions & bounce
 	for _, b := range g.balls {
 		if b == nil {
@@ -192,76 +171,30 @@ func (g *Game) Update() error {
 		fmt.Println("paddleSegmentLenx:", paddleSegmentLenX)
 
 		if ballCenterX < g.paddle.Rect.X+paddleSegmentLenX {
-			fmt.Println("multiball hit segment: 1")
+			//fmt.Println("multiball hit segment: 1")
 			b.CalcXYForAngle(360.0 - segmentAngleDegrees*2 - segmentAngleDegrees/2.0)
 		} else if ballCenterX < g.paddle.Rect.X+paddleSegmentLenX*2 {
-			fmt.Println("multiball hit segment: 2")
+			//fmt.Println("multiball hit segment: 2")
 			b.CalcXYForAngle(360.0 - segmentAngleDegrees - segmentAngleDegrees/2.0)
 		} else if ballCenterX < g.paddle.Rect.X+paddleSegmentLenX*3 {
-			fmt.Println("multiball hit segment: 3")
+			// fmt.Println("multiball hit segment: 3")
 			b.CalcXYForAngle(360.0 - segmentAngleDegrees/2.0)
 		} else if ballCenterX < g.paddle.Rect.X+paddleSegmentLenX*4 {
-			fmt.Println("multiball hit segment: 4")
+			// fmt.Println("multiball hit segment: 4")
 			b.CalcXYForAngle(segmentAngleDegrees / 2.0)
 		} else if ballCenterX < g.paddle.Rect.X+paddleSegmentLenX*5 {
-			fmt.Println("multiball hit segment: 5")
+			// fmt.Println("multiball hit segment: 5")
 			b.CalcXYForAngle(segmentAngleDegrees + segmentAngleDegrees/2.0)
 		} else {
-			fmt.Println("multiball hit segment: 6")
+			// fmt.Println("multiball hit segment: 6")
 			b.CalcXYForAngle(segmentAngleDegrees*2 + segmentAngleDegrees/2.0)
 		}
-		fmt.Println("Ball sX, sY:", b.SpeedX, b.SpeedY)
 		// ensure that the ball bounces upwards
 		if b.SpeedY > 0 {
 			b.SpeedY = -b.SpeedY
 		}
 
 	}
-	// if isColliding(&g.ball.Rect, &g.paddle.Rect) {
-	// 	// Ball's bounce angle is determined by the point
-	// 	// of collision on the paddle.
-	// 	ballCenterX := g.ball.Rect.X + g.ball.Rect.W/2.0
-
-	// 	// segmented determination of bounce (launch) angle
-	// 	segmentAngleDegrees := 22.5
-	// 	paddleSegmentLenX := g.paddle.Rect.W / 6
-	// 	if ballCenterX < g.paddle.Rect.X+paddleSegmentLenX {
-	// 		fmt.Println("hit segment 1") // works
-	// 		g.ball.SpeedX, g.ball.SpeedY = speedXYForAngle(
-	// 			g.ball.SpeedBase,
-	// 			360.0-(segmentAngleDegrees/2.0)-(segmentAngleDegrees*2))
-	// 	} else if ballCenterX < g.paddle.Rect.X+paddleSegmentLenX*2 {
-	// 		fmt.Println("hit segment 2") // works
-	// 		g.ball.SpeedX, g.ball.SpeedY = speedXYForAngle(g.ball.SpeedBase,
-	// 			360.0-(segmentAngleDegrees/2.0)-segmentAngleDegrees)
-	// 	} else if ballCenterX < g.paddle.Rect.X+paddleSegmentLenX*3 {
-	// 		fmt.Println("hit segment 3 ") // launches straight up, why?
-	// 		g.ball.SpeedX, g.ball.SpeedY = speedXYForAngle(g.ball.SpeedBase,
-	// 			360.0-(segmentAngleDegrees/2.0))
-	// 		fmt.Println(360.0 - (segmentAngleDegrees / 2.0))
-	// 	} else if ballCenterX < g.paddle.Rect.X+paddleSegmentLenX*4 {
-	// 		fmt.Println("hit segment 4") // launches straight up, why?
-	// 		g.ball.SpeedX, g.ball.SpeedY = speedXYForAngle(g.ball.SpeedBase,
-	// 			segmentAngleDegrees/2.0)
-	// 	} else if ballCenterX < g.paddle.Rect.X+paddleSegmentLenX*5 {
-	// 		fmt.Println("hit segment 5") // works
-	// 		g.ball.SpeedX, g.ball.SpeedY = speedXYForAngle(g.ball.SpeedBase,
-	// 			(segmentAngleDegrees/2.0)+segmentAngleDegrees)
-	// 	} else {
-	// 		fmt.Println("hit segment 6") // works
-	// 		g.ball.SpeedX, g.ball.SpeedY = speedXYForAngle(g.ball.SpeedBase,
-	// 			(segmentAngleDegrees/2.0)+segmentAngleDegrees*2)
-	// 	}
-	// 	fmt.Println(segmentAngleDegrees, segmentAngleDegrees/2.0)
-
-	// 	if g.ball.SpeedY > 0 {
-	// 		g.ball.SpeedY = -g.ball.SpeedY
-	// 	}
-	// }
-
-	// for i := range g.bricks {
-	// 	g.bricks[i].Update()
-	// }
 
 	g.paddle.Update()
 
@@ -277,12 +210,6 @@ func (g *Game) Update() error {
 		}
 	}
 
-	if !g.ball.Grabbed {
-		g.ball.Update()
-	} else {
-		g.ball.Rect.X = g.paddle.Rect.X
-	}
-
 	if g.level.TotalHealth <= 0 {
 		g.currLevelNum++
 		g.level = level.NewLevel(g.currLevelNum)
@@ -292,17 +219,14 @@ func (g *Game) Update() error {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	//ebitenutil.DebugPrint(screen, "Hello, World!")
 	for iRow := 0; iRow < config.BrickRowCount; iRow++ {
 		for iColumn := 0; iColumn < config.BrickColumnCount; iColumn++ {
 			g.level.Bricks[iRow][iColumn].Draw(screen)
 		}
 	}
-	// for i := range g.bricks {
-	// 	g.bricks[i].Draw(screen)
-	// }
+
 	g.paddle.Draw(screen)
-	g.ball.Draw(screen)
+
 	for _, b := range g.balls {
 		b.Draw(screen)
 	}
@@ -320,24 +244,13 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 var ErrTerminated = errors.New("terminated")
 
 func main() {
-	// if true {
-	// 	var degree float64 = 22.5
-	// 	var baseSpeed float64 = 22.0
-	// 	sX, sY := speedXYForAngle(baseSpeed, degree)
-	// 	fmt.Println(degree, "|", sX, "|", sY)
-	// 	return
-	// }
-	if false {
-		lvl := level.Level{}
-		lvl.LoadFromFile("level1.txt")
-		return
-	}
 
 	ebiten.SetWindowSize(640, 480)
 	ebiten.SetWindowTitle("GO-BALL")
 
 	game := Game{}
 
+	// init balls
 	game.balls[0] = entities.NewBall(
 		100.0,
 		100.0,
@@ -346,9 +259,6 @@ func main() {
 		true,
 	)
 
-	game.currLevelNum = 1
-	game.level = level.NewLevel(game.currLevelNum)
-	game.level.PrintLevel()
 	// init paddle
 	cursorX, _ := ebiten.CursorPosition()
 	game.lives = config.StartingLives
@@ -359,20 +269,10 @@ func main() {
 	game.paddle.Image = ebiten.NewImage(int(game.paddle.Rect.W), int(game.paddle.Rect.H))
 	game.paddle.Image.Fill(color.White)
 
-	// init ball
-
-	game.ball.Rect.X = 100
-	game.ball.Rect.Y = 100
-	game.ball.Rect.W = config.BallSize
-	game.ball.Rect.H = config.BallSize
-	//game.ball.Speed = -2
-	game.ball.SpeedBase = config.BallStartingSpeed
-	game.ball.SpeedX, game.ball.SpeedY = speedXYForAngle(
-		game.ball.SpeedBase, 360.0-12.75)
-	game.ball.Grabbed = true
-
-	game.ball.Image = ebiten.NewImage(int(game.ball.Rect.W), int(game.ball.Rect.H))
-	game.ball.Image.Fill(color.White)
+	// init level
+	game.currLevelNum = 1
+	game.level = level.NewLevel(game.currLevelNum)
+	game.level.PrintLevel()
 
 	ebiten.SetVsyncEnabled(false)
 	ebiten.SetCursorMode(ebiten.CursorModeHidden)
