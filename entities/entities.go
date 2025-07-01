@@ -8,12 +8,17 @@ import (
 	"github.com/pyrdelic/goball/config"
 )
 
-type Updater interface {
-	Update()
-}
+// type Updater interface {
+// 	Update()
+// }
 
-type Drawer interface {
-	Draw()
+// type Drawer interface {
+// 	Draw()
+// }
+
+type Node interface {
+	Update()
+	Draw(*ebiten.Image)
 }
 
 // base struct for entities, with position and size
@@ -31,8 +36,6 @@ type Paddle struct {
 	Image *ebiten.Image
 	Rect  Rect
 	//Entity
-	Updater
-	Drawer
 }
 
 func (p *Paddle) Update() {
@@ -71,8 +74,6 @@ type Brick struct {
 	Rect      Rect
 	Health    int
 	BrickType int
-	Updater
-	Drawer
 	//Entity
 }
 
@@ -101,8 +102,6 @@ type Ball struct {
 	SpeedX, SpeedY float64
 	Grabbed        bool
 	// TODO: direction
-	Updater
-	Drawer
 	//Entity
 }
 

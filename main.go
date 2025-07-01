@@ -16,7 +16,7 @@ import (
 )
 
 type Game struct {
-	paddle entities.Paddle
+	paddle *entities.Paddle
 	//bricks []entities.Brick
 	//ball         entities.Ball
 	balls        [config.BallMaxCount]*entities.Ball
@@ -25,6 +25,14 @@ type Game struct {
 	level        *level.Level
 	currLevelNum int
 	GameOver     bool
+}
+
+func UpdateNode(n entities.Node) {
+	n.Update()
+}
+
+func DrawNode(n entities.Node) {
+
 }
 
 // Detects a general collision between two Rects
@@ -66,8 +74,6 @@ func (g *Game) Update() error {
 	// }
 	// fmt.Println(g.balls)
 
-	// TODO: fix this logic
-	// why adding extra balls?
 	if g.BallCount <= 0 {
 		// lose a life
 		g.lives--
@@ -233,8 +239,8 @@ func (g *Game) Update() error {
 		}
 
 	}
-
-	g.paddle.Update()
+	UpdateNode(g.paddle)
+	//g.paddle.Update()
 
 	// update balls
 	for i := 0; i < len(g.balls); i++ {
@@ -320,6 +326,7 @@ func main() {
 	// init paddle
 	cursorX, _ := ebiten.CursorPosition()
 	game.lives = config.StartingLives
+	game.paddle = &entities.Paddle{}
 	game.paddle.Rect.X = float64(cursorX)
 	game.paddle.Rect.Y = 200
 	game.paddle.Rect.W = config.PaddleStartingWidth
