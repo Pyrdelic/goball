@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"math"
 
 	"image/color"
 	"log"
@@ -16,9 +15,9 @@ import (
 )
 
 type Game struct {
-	paddle *entities.Paddle
-	//bricks []entities.Brick
-	//ball         entities.Ball
+	// TODO: Paddle to level
+	// TODO: Balls to level
+	paddle       *entities.Paddle
 	balls        [config.BallMaxCount]*entities.Ball
 	BallCount    int
 	lives        int
@@ -27,13 +26,13 @@ type Game struct {
 	GameOver     bool
 }
 
-func UpdateNode(n entities.Node) {
-	n.Update()
-}
+// func UpdateNode(n entities.Node) {
+// 	n.Update()
+// }
 
-func DrawNode(n entities.Node) {
+// func DrawNode(n entities.Node) {
 
-}
+// }
 
 // Detects a general collision between two Rects
 func isColliding(a *entities.Rect, b *entities.Rect) bool {
@@ -50,14 +49,14 @@ func isColliding(a *entities.Rect, b *entities.Rect) bool {
 
 // returns a game coordinate -rotated x y speed components
 // for a desired angle and base speed multiplier
-func speedXYForAngle(speedBase float64, angle float64) (float64, float64) {
-	radian := angle * (math.Pi / 180)
-	speedX := speedBase * math.Sin(radian)
-	speedY := speedBase * math.Cos(radian)
-	// flip Y component to correct for game space coordinate system
-	//fmt.Println(int(speedX), int(-speedY))
-	return speedX, -speedY
-}
+// func speedXYForAngle(speedBase float64, angle float64) (float64, float64) {
+// 	radian := angle * (math.Pi / 180)
+// 	speedX := speedBase * math.Sin(radian)
+// 	speedY := speedBase * math.Cos(radian)
+// 	// flip Y component to correct for game space coordinate system
+// 	//fmt.Println(int(speedX), int(-speedY))
+// 	return speedX, -speedY
+// }
 
 func (g *Game) Update() error {
 	// check collisions
@@ -73,6 +72,7 @@ func (g *Game) Update() error {
 
 	// }
 	// fmt.Println(g.balls)
+	//node.UpdateNode(g.level)
 
 	if g.BallCount <= 0 {
 		// lose a life
@@ -239,8 +239,8 @@ func (g *Game) Update() error {
 		}
 
 	}
-	UpdateNode(g.paddle)
-	//g.paddle.Update()
+	//node.UpdateNode(g.paddle)
+	g.paddle.Update()
 
 	// update balls
 	for i := 0; i < len(g.balls); i++ {
@@ -250,6 +250,7 @@ func (g *Game) Update() error {
 		if g.balls[i].Grabbed {
 			g.balls[i].Rect.X = g.paddle.Rect.X
 		} else {
+			//node.UpdateNode(g.balls[i])
 			g.balls[i].Update()
 		}
 	}

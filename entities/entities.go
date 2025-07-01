@@ -39,6 +39,9 @@ type Paddle struct {
 }
 
 func (p *Paddle) Update() {
+	if p == nil {
+		return
+	}
 	x, _ := ebiten.CursorPosition()
 	// center paddle to cursor
 	x = x - int(p.Rect.W/2)
@@ -53,6 +56,9 @@ func (p *Paddle) Update() {
 }
 
 func (p *Paddle) Draw(screen *ebiten.Image) {
+	if p == nil {
+		return
+	}
 	DIO := ebiten.DrawImageOptions{}
 	DIO.GeoM.Translate(float64(p.Rect.X), float64(p.Rect.Y)) // ??
 	screen.DrawImage(p.Image, &DIO)
@@ -78,6 +84,9 @@ type Brick struct {
 }
 
 func (b *Brick) Update() {
+	if b == nil {
+		return
+	}
 	// TODO: collision with Ball (destruction)
 }
 
