@@ -6,7 +6,6 @@ import (
 	"image/color"
 	"log"
 	"os"
-	"unicode/utf8"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/pyrdelic/goball/config"
@@ -53,7 +52,7 @@ func (l *Level) LoadFromFile(path string) {
 			break
 		}
 		line := scanner.Text()
-		fmt.Println(line, len(line), utf8.RuneCountInString(line))
+		//fmt.Println(line, len(line), utf8.RuneCountInString(line))
 		for iColumn, runeCharacter := range []rune(line) {
 			if !(iColumn < config.BrickColumnCount) {
 				break // max column count reached
@@ -62,11 +61,11 @@ func (l *Level) LoadFromFile(path string) {
 			case '0':
 				// no brick
 				l.Bricks[iRow][iColumn] = nil
-				fmt.Println("No brick")
+				//fmt.Println("No brick")
 			case '1':
 				// basic brick
 
-				fmt.Println("Basic brick")
+				//fmt.Println("Basic brick")
 				brick := entities.Brick{}
 				brick.Health = 1
 				brick.BrickType = 1
@@ -88,17 +87,19 @@ func (l *Level) LoadFromFile(path string) {
 				// default to no brick
 			default:
 				// default to no brick
-				fmt.Println("No brick")
+				//fmt.Println("No brick")
 				l.Bricks[iRow][iColumn] = nil
 			}
 		}
 		iRow++
 	}
+	fmt.Println("l.TotalHealth:", l.TotalHealth)
 }
 
 // returns a pointer to a new level, based on the level number.
 func NewLevel(levelNumber int) *Level {
 	level := Level{}
+	level.CurrLevelNum = levelNumber
 	levelPath := fmt.Sprintf("levels/level%d.txt", levelNumber)
 	fmt.Println("Loading level from file:", levelPath)
 	level.LoadFromFile(levelPath)
@@ -303,12 +304,12 @@ func (l *Level) Update() {
 
 	// level cleared, move to next
 	if l.TotalHealth <= 0 {
-		l.CurrLevelNum++
+
 		// TODO: Change this to a scene system
-		l = NewLevel(l.CurrLevelNum)
+		*l = *NewLevel(l.CurrLevelNum + 1)
 	}
 
-	fmt.Println(l.Balls)
+	//fmt.Println(l.Balls)
 }
 
 func (l *Level) Draw(screen *ebiten.Image) {
@@ -316,7 +317,7 @@ func (l *Level) Draw(screen *ebiten.Image) {
 		return
 	}
 	// TODO: Draw every node in the level
-	fmt.Println("Draw level")
+	//fmt.Println("Draw level")
 
 	// draw bricks
 	for iRow := 0; iRow < config.BrickRowCount; iRow++ {

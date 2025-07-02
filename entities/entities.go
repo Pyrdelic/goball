@@ -1,7 +1,6 @@
 package entities
 
 import (
-	"fmt"
 	"image/color"
 	"math"
 
@@ -53,7 +52,7 @@ func NewPaddle() *Paddle {
 }
 
 func (p *Paddle) Update() {
-	fmt.Println("Paddle update")
+	//fmt.Println("Paddle update")
 	if p == nil {
 		return
 	}
