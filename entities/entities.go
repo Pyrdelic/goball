@@ -1,6 +1,7 @@
 package entities
 
 import (
+	"fmt"
 	"image/color"
 	"math"
 
@@ -38,7 +39,21 @@ type Paddle struct {
 	//Entity
 }
 
+// NewPaddle returns a pointer to a new Paddle
+func NewPaddle() *Paddle {
+	paddle := Paddle{}
+	cursorX, _ := ebiten.CursorPosition()
+	paddle.Rect.X = float64(cursorX)
+	paddle.Rect.Y = 200
+	paddle.Rect.W = config.PaddleStartingWidth
+	paddle.Rect.H = 5
+	paddle.Image = ebiten.NewImage(int(paddle.Rect.W), int(paddle.Rect.H))
+	paddle.Image.Fill(color.White)
+	return &paddle
+}
+
 func (p *Paddle) Update() {
+	fmt.Println("Paddle update")
 	if p == nil {
 		return
 	}

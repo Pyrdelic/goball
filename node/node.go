@@ -7,10 +7,10 @@ type Node interface {
 	Draw(screen *ebiten.Image)
 }
 
-func UpdateNode(n Node) {
-
+func Update(n Node) {
+	n.Update()
 }
 
-func DrawNode(n Node, screen *ebiten.Image) {
+func Draw(n Node, screen *ebiten.Image) {
 	n.Draw(screen)
 }

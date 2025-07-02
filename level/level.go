@@ -102,6 +102,14 @@ func NewLevel(levelNumber int) *Level {
 	levelPath := fmt.Sprintf("levels/level%d.txt", levelNumber)
 	fmt.Println("Loading level from file:", levelPath)
 	level.LoadFromFile(levelPath)
+	level.Paddle = entities.NewPaddle()
+	level.Balls[0] = entities.NewBall(
+		config.PlayAreaWidth/2.0,
+		config.PlayAreaHeight/2.0,
+		config.BallStartingSpeed,
+		config.BallStartingAngle,
+		true,
+	)
 	return &level
 }
 
@@ -121,8 +129,31 @@ func (l *Level) PrintLevel() {
 }
 
 func (l *Level) Update() {
+	if l == nil {
+		return
+	}
 	// TODO: Update every node in in the level
-	fmt.Println("Update level")
+
+	// if ebiten.IsKeyPressed(ebiten.KeyEscape) {
+	// 	// We exit the game by returning a custom error
+	// 	return ErrTerminated
+	// }
+	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
+		for i := range len(l.Balls) {
+			if l.Balls[i] == nil {
+				continue
+			}
+			if l.Balls[i].Grabbed {
+				l.Balls[i].Grabbed = false
+				// make sure the ball launches upwards
+				if l.Balls[i].SpeedY > 0 {
+					l.Balls[i].SpeedY = -l.Balls[i].SpeedY
+				}
+			}
+		}
+	}
+
+	//fmt.Println("Update level")
 	for i := range len(l.Balls) {
 		if l.Balls[i] == nil {
 			continue
@@ -254,7 +285,7 @@ func (l *Level) Update() {
 		}
 
 	}
-	node.UpdateNode(l.Paddle)
+	node.Update(l.Paddle)
 	//g.paddle.Update()
 
 	// update balls
@@ -265,7 +296,7 @@ func (l *Level) Update() {
 		if l.Balls[i].Grabbed {
 			l.Balls[i].Rect.X = l.Paddle.Rect.X
 		} else {
-			node.UpdateNode(l.Balls[i])
+			node.Update(l.Balls[i])
 			//g.balls[i].Update()
 		}
 	}
@@ -281,6 +312,23 @@ func (l *Level) Update() {
 }
 
 func (l *Level) Draw(screen *ebiten.Image) {
+	if l == nil {
+		return
+	}
 	// TODO: Draw every node in the level
 	fmt.Println("Draw level")
+
+	// draw bricks
+	for iRow := 0; iRow < config.BrickRowCount; iRow++ {
+		for iColumn := 0; iColumn < config.BrickColumnCount; iColumn++ {
+			//l.Bricks[iRow][iColumn].Draw(screen)
+			node.Draw(l.Bricks[iRow][iColumn], screen)
+		}
+	}
+	// draw Paddle
+	node.Draw(l.Paddle, screen)
+	// draw Balls
+	for i := range len(l.Balls) {
+		node.Draw(l.Balls[i], screen)
+	}
 }
