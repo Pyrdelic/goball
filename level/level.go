@@ -3,18 +3,18 @@ package level
 import (
 	"bufio"
 	"fmt"
-	"image/color"
 	"log"
 	"os"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/pyrdelic/goball/brick"
 	"github.com/pyrdelic/goball/config"
 	"github.com/pyrdelic/goball/entities"
 	"github.com/pyrdelic/goball/node"
 )
 
 type Level struct {
-	Bricks       [config.BrickRowCount][config.BrickColumnCount]*entities.Brick
+	Bricks       [config.BrickRowCount][config.BrickColumnCount]*brick.Brick
 	TotalHealth  int
 	Paddle       *entities.Paddle
 	Balls        [config.BallMaxCount]*entities.Ball
@@ -65,24 +65,30 @@ func (l *Level) LoadFromFile(path string) {
 			case '1':
 				// basic brick
 
-				//fmt.Println("Basic brick")
-				brick := entities.Brick{}
-				brick.Health = 1
-				brick.BrickType = 1
-				brick.Rect.X = float64(iColumn * config.BrickWidth)
-				brick.Rect.Y = float64(iRow * config.BrickHeight)
-				brick.Rect.W = config.BrickWidth
-				brick.Rect.H = config.BrickHeight
-				brick.Image = ebiten.NewImage(
-					int(brick.Rect.W),
-					int(brick.Rect.H))
-				brick.Image.Fill(color.RGBA{
-					R: uint8(64),
-					G: uint8(255),
-					B: uint8(64),
-					A: uint8(255)})
-				l.TotalHealth += brick.Health
-				l.Bricks[iRow][iColumn] = &brick
+				// //fmt.Println("Basic brick")
+				// brick := entities.Brick{}
+				// brick.Health = 1
+				// brick.BrickType = 1
+				// brick.Rect.X = float64(iColumn * config.BrickWidth)
+				// brick.Rect.Y = float64(iRow * config.BrickHeight)
+				// brick.Rect.W = config.BrickWidth
+				// brick.Rect.H = config.BrickHeight
+				// brick.Image = ebiten.NewImage(
+				// 	int(brick.Rect.W),
+				// 	int(brick.Rect.H))
+				// brick.Image.Fill(color.RGBA{
+				// 	R: uint8(64),
+				// 	G: uint8(255),
+				// 	B: uint8(64),
+				// 	A: uint8(255)})
+				// l.TotalHealth += brick.Health
+				l.Bricks[iRow][iColumn] = brick.NewBrick(
+					float64(iColumn*config.BrickWidth),
+					float64(iRow*config.BrickHeight),
+					1,
+				)
+				l.TotalHealth += l.Bricks[iRow][iColumn].Health
+				//fmt.Println("Brick Health:", l.Bricks[iRow][iColumn].Health)
 
 				// default to no brick
 			default:
@@ -196,8 +202,9 @@ func (l *Level) Update() {
 						}
 
 					}
-					collidedBrick.Health--
-					l.TotalHealth--
+					//collidedBrick.Health--
+					// damage the brick
+					l.TotalHealth -= collidedBrick.Hit()
 				}
 			}
 		}
