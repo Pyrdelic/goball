@@ -9,7 +9,8 @@ import (
 )
 
 const (
-	BrickTypeBasic = 1
+	BrickTypeBasic = rune('1')
+	BrickTypeSteel = rune('2')
 )
 
 var (
@@ -19,7 +20,7 @@ var (
 		B: uint8(0),
 		A: uint8(255),
 	}
-	ColorBrickSteel = color.RGBA{
+	BrickColorSteel = color.RGBA{
 		R: uint8(127),
 		G: uint8(127),
 		B: uint8(127),
@@ -34,13 +35,15 @@ var (
 
 // base struct for Bricks
 type Brick struct {
-	Image     *ebiten.Image
-	Rect      entities.Rect
-	Health    int
-	BrickType int
+	Image        *ebiten.Image
+	Rect         entities.Rect
+	Health       int
+	Destructable bool
+	BrickType    rune
 	//Entity
 }
 
+// Hit reduces Bricks health accordily and returns damage dealt
 func (b *Brick) Hit() int {
 	if b == nil {
 		return 0
@@ -48,18 +51,18 @@ func (b *Brick) Hit() int {
 	switch b.BrickType {
 	case BrickTypeBasic:
 		b.Health--
-		if b.Health <= 0 {
-			b.Destroy()
-		}
 		return 1 // return damage dealt
+	case BrickTypeSteel:
+		return 0 // steel brick is indestructible
 	default:
 		return 0
 	}
 }
 
-func (b *Brick) Destroy() {
-	b = nil
-}
+// // Destroy sets *Brick to nil
+// func destroy(b *Brick) *Brick{
+// 	b = nil
+// }
 
 func (b *Brick) Update() {
 	if b == nil {
@@ -78,8 +81,11 @@ func (b *Brick) Draw(screen *ebiten.Image) {
 	//fmt.Printf("%+v\n", p)
 }
 
-// NewBrickBasic returns a pointer to a new BrickBasic.
-func NewBrick(x, y float64, brickType int) *Brick {
+// NewBrick returns a pointer to a new Brick of known brickType and it's health.
+// Returns nil if brickType not known.
+// '1': Basic Brick
+// '2': Steel Brick
+func NewBrick(x, y float64, brickType rune) (*Brick, int) {
 	brick := Brick{}
 	brick.Rect.X = x
 	brick.Rect.Y = y
@@ -89,13 +95,19 @@ func NewBrick(x, y float64, brickType int) *Brick {
 	brick.Image = ebiten.NewImage(int(brick.Rect.W), int(brick.Rect.H))
 	switch brick.BrickType {
 	case BrickTypeBasic:
+		brick.Destructable = true
 		brick.Image.Fill(BrickColorBasic)
 		brick.Health = 1
+	case BrickTypeSteel:
+		//fmt.Println("Steel brick add")
+		brick.Destructable = false
+		brick.Image.Fill(BrickColorSteel)
+		brick.Health = 0
 	default:
-		return nil
+		return nil, 0
 	}
-	brick.Image.Fill(BrickColorBasic)
-	return &brick
+	//brick.Image.Fill(BrickColorBasic)
+	return &brick, brick.Health
 }
 
 // BRICK BASIC ^

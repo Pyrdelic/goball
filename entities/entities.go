@@ -83,11 +83,11 @@ func (p *Paddle) Draw(screen *ebiten.Image) {
 
 // BRICK vvvvvv
 
-const (
-	BrikcTypeNone           = 0
-	BrickTypeBasic          = 1
-	BrickTypeIndestructible = 2
-)
+// const (
+// 	BrikcTypeNone           = 0
+// 	BrickTypeBasic          = 1
+// 	BrickTypeIndestructible = 2
+// )
 
 type Brick struct {
 	Image     *ebiten.Image

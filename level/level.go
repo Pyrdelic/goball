@@ -57,45 +57,13 @@ func (l *Level) LoadFromFile(path string) {
 			if !(iColumn < config.BrickColumnCount) {
 				break // max column count reached
 			}
-			switch runeCharacter {
-			case '0':
-				// no brick
-				l.Bricks[iRow][iColumn] = nil
-				//fmt.Println("No brick")
-			case '1':
-				// basic brick
-
-				// //fmt.Println("Basic brick")
-				// brick := entities.Brick{}
-				// brick.Health = 1
-				// brick.BrickType = 1
-				// brick.Rect.X = float64(iColumn * config.BrickWidth)
-				// brick.Rect.Y = float64(iRow * config.BrickHeight)
-				// brick.Rect.W = config.BrickWidth
-				// brick.Rect.H = config.BrickHeight
-				// brick.Image = ebiten.NewImage(
-				// 	int(brick.Rect.W),
-				// 	int(brick.Rect.H))
-				// brick.Image.Fill(color.RGBA{
-				// 	R: uint8(64),
-				// 	G: uint8(255),
-				// 	B: uint8(64),
-				// 	A: uint8(255)})
-				// l.TotalHealth += brick.Health
-				l.Bricks[iRow][iColumn] = brick.NewBrick(
-					float64(iColumn*config.BrickWidth),
-					float64(iRow*config.BrickHeight),
-					1,
-				)
-				l.TotalHealth += l.Bricks[iRow][iColumn].Health
-				//fmt.Println("Brick Health:", l.Bricks[iRow][iColumn].Health)
-
-				// default to no brick
-			default:
-				// default to no brick
-				//fmt.Println("No brick")
-				l.Bricks[iRow][iColumn] = nil
-			}
+			var healthToAdd int = 0
+			l.Bricks[iRow][iColumn], healthToAdd = brick.NewBrick(
+				float64(iColumn*config.BrickWidth),
+				float64(iRow*config.BrickHeight),
+				runeCharacter,
+			)
+			l.TotalHealth += healthToAdd
 		}
 		iRow++
 	}
@@ -123,13 +91,13 @@ func NewLevel(levelNumber int) *Level {
 func (l *Level) PrintLevel() {
 	for iRow := 0; iRow < config.BrickRowCount; iRow++ {
 		for iColumn := 0; iColumn < config.BrickColumnCount; iColumn++ {
-			var brickType int
+			var brickType rune = '_'
 			if l.Bricks[iRow][iColumn] == nil {
 				brickType = 0
 			} else {
 				brickType = l.Bricks[iRow][iColumn].BrickType
 			}
-			fmt.Printf("%d", brickType)
+			fmt.Printf("%c", brickType)
 		}
 		fmt.Println()
 	}
@@ -216,7 +184,8 @@ func (l *Level) Update() {
 			if l.Bricks[iRow][iColumn] == nil {
 				continue
 			}
-			if l.Bricks[iRow][iColumn].Health <= 0 {
+			if l.Bricks[iRow][iColumn].Health <= 0 &&
+				l.Bricks[iRow][iColumn].Destructable {
 				l.Bricks[iRow][iColumn] = nil
 			}
 		}
