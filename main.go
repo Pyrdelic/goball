@@ -18,9 +18,9 @@ type Game struct {
 	// TODO: Paddle to level
 	// TODO: Balls to level
 	//paddle       *entities.Paddle
-	balls        [config.BallMaxCount]*entities.Ball
-	BallCount    int
-	lives        int
+	balls     [config.BallMaxCount]*entities.Ball
+	BallCount int
+	//lives        int
 	level        *level.Level
 	currLevelNum int
 	GameOver     bool
@@ -91,177 +91,15 @@ func (g *Game) Update() error {
 		// We exit the game by returning a custom error
 		return ErrTerminated
 	}
-	// if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
-	// 	for _, b := range g.balls {
-	// 		if b == nil {
-	// 			continue
-	// 		}
-	// 		if b.Grabbed {
-	// 			b.Grabbed = false
-	// 			// make sure the ball launches upwards
-	// 			if b.SpeedY > 0 {
-	// 				b.SpeedY = -b.SpeedY
-	// 			}
-	// 		}
-	// 	}
-	// }
-
-	// alreadyBouncedBrick := false // prevents bounce cancellation if multiple collision
-	// // brick collisions
-
-	// for i := 0; i < len(g.balls); i++ {
-	// 	if g.balls[i] == nil {
-	// 		continue
-	// 	}
-	// 	for iRow := 0; iRow < config.BrickRowCount; iRow++ {
-	// 		for iColumn := 0; iColumn < config.BrickColumnCount; iColumn++ {
-	// 			if g.level.Bricks[iRow][iColumn] == nil {
-	// 				continue
-	// 			}
-	// 			if isColliding(&g.balls[i].Rect, &g.level.Bricks[iRow][iColumn].Rect) {
-	// 				collidedBrick := g.level.Bricks[iRow][iColumn]
-	// 				// bounce if not already bounced (prevents bounce cancellation)
-	// 				if !alreadyBouncedBrick {
-	// 					// calculate collision lengts of x and y,
-	// 					// this determines if the collision is x or y sided
-	// 					// x
-	// 					var xCollisionLength, yCollisionLength float64
-	// 					if g.balls[i].Rect.X < collidedBrick.Rect.X {
-	// 						xCollisionLength = g.balls[i].Rect.X + g.balls[i].Rect.W - collidedBrick.Rect.X
-	// 					} else {
-	// 						xCollisionLength = collidedBrick.Rect.X + collidedBrick.Rect.X - g.balls[i].Rect.X
-	// 					}
-	// 					// y
-	// 					if g.balls[i].Rect.Y < collidedBrick.Rect.Y {
-	// 						yCollisionLength = g.balls[i].Rect.Y + g.balls[i].Rect.H - collidedBrick.Rect.Y
-	// 					} else {
-	// 						yCollisionLength = collidedBrick.Rect.Y + collidedBrick.Rect.H - g.balls[i].Rect.Y
-	// 					}
-
-	// 					if xCollisionLength >= yCollisionLength {
-	// 						// y-sided collision
-	// 						g.balls[i].SpeedY = -g.balls[i].SpeedY
-	// 						alreadyBouncedBrick = true
-	// 					} else {
-	// 						// x-sided collision
-	// 						g.balls[i].SpeedX = -g.balls[i].SpeedX
-	// 						alreadyBouncedBrick = true
-	// 					}
-
-	// 				}
-	// 				collidedBrick.Health--
-	// 				g.level.TotalHealth--
-	// 			}
-	// 		}
-	// 	}
-	// }
-
-	// // destroy bricks with 0 or less health
-	// for iRow := 0; iRow < config.BrickRowCount; iRow++ {
-	// 	for iColumn := 0; iColumn < config.BrickColumnCount; iColumn++ {
-	// 		if g.level.Bricks[iRow][iColumn] == nil {
-	// 			continue
-	// 		}
-	// 		if g.level.Bricks[iRow][iColumn].Health <= 0 {
-	// 			g.level.Bricks[iRow][iColumn] = nil
-	// 		}
-	// 	}
-	// }
-
-	// // wall collisions & bounce
-	// for i := 0; i < len(g.balls); i++ {
-	// 	if g.balls[i] == nil {
-	// 		continue
-	// 	}
-	// 	// left wall
-	// 	if g.balls[i].Rect.X <= 0 && g.balls[i].SpeedX < 0 {
-	// 		g.balls[i].SpeedX = -g.balls[i].SpeedX
-	// 	}
-	// 	// right wall
-	// 	if g.balls[i].Rect.X+g.balls[i].Rect.W >= config.PlayAreaWidth &&
-	// 		g.balls[i].SpeedX > 0 {
-	// 		g.balls[i].SpeedX = -g.balls[i].SpeedX
-	// 	}
-	// 	// ceiling
-	// 	if g.balls[i].Rect.Y <= 0 && g.balls[i].SpeedY < 0 {
-	// 		g.balls[i].SpeedY = -g.balls[i].SpeedY
-	// 	}
-	// 	// floor
-	// 	if g.balls[i].Rect.Y+g.balls[i].Rect.H >= config.PlayAreaHeight && g.balls[i].SpeedY > 0 {
-	// 		// TODO: destroy ball
-	// 		if config.GodMode {
-	// 			// god mode just bounces off the floor too
-	// 			g.balls[i].SpeedY = -g.balls[i].SpeedY
-	// 		} else {
-	// 			g.balls[i] = nil
-	// 			//fmt.Println("Ball destroyed")
-	// 			g.BallCount--
-	// 		}
-	// 	}
-	// }
-
-	// // Paddle collisions & bounce
-	// for i := 0; i < len(g.balls); i++ {
-	// 	if g.balls[i] == nil {
-	// 		continue
-	// 	}
-	// 	if !isColliding(&g.balls[i].Rect, &g.paddle.Rect) {
-	// 		continue
-	// 	}
-	// 	ballCenterX := g.balls[i].Rect.X + g.balls[i].Rect.W/2
-	// 	//fmt.Println("Ball centerX:", ballCenterX)
-	// 	segmentAngleDegrees := 22.5
-	// 	paddleSegmentLenX := g.paddle.Rect.W / 6
-	// 	//fmt.Println("paddleSegmentLenx:", paddleSegmentLenX)
-
-	// 	if ballCenterX < g.paddle.Rect.X+paddleSegmentLenX {
-	// 		//fmt.Println("multiball hit segment: 1")
-	// 		g.balls[i].CalcXYForAngle(360.0 - segmentAngleDegrees*2 - segmentAngleDegrees/2.0)
-	// 	} else if ballCenterX < g.paddle.Rect.X+paddleSegmentLenX*2 {
-	// 		//fmt.Println("multiball hit segment: 2")
-	// 		g.balls[i].CalcXYForAngle(360.0 - segmentAngleDegrees - segmentAngleDegrees/2.0)
-	// 	} else if ballCenterX < g.paddle.Rect.X+paddleSegmentLenX*3 {
-	// 		// fmt.Println("multiball hit segment: 3")
-	// 		g.balls[i].CalcXYForAngle(360.0 - segmentAngleDegrees/2.0)
-	// 	} else if ballCenterX < g.paddle.Rect.X+paddleSegmentLenX*4 {
-	// 		// fmt.Println("multiball hit segment: 4")
-	// 		g.balls[i].CalcXYForAngle(segmentAngleDegrees / 2.0)
-	// 	} else if ballCenterX < g.paddle.Rect.X+paddleSegmentLenX*5 {
-	// 		// fmt.Println("multiball hit segment: 5")
-	// 		g.balls[i].CalcXYForAngle(segmentAngleDegrees + segmentAngleDegrees/2.0)
-	// 	} else {
-	// 		// fmt.Println("multiball hit segment: 6")
-	// 		g.balls[i].CalcXYForAngle(segmentAngleDegrees*2 + segmentAngleDegrees/2.0)
-	// 	}
-	// 	// ensure that the ball bounces upwards
-	// 	if g.balls[i].SpeedY > 0 {
-	// 		g.balls[i].SpeedY = -g.balls[i].SpeedY
-	// 	}
-
-	// }
-	// //node.UpdateNode(g.paddle)
-	// g.paddle.Update()
-
-	// // update balls
-	// for i := 0; i < len(g.balls); i++ {
-	// 	if g.balls[i] == nil {
-	// 		continue
-	// 	}
-	// 	if g.balls[i].Grabbed {
-	// 		g.balls[i].Rect.X = g.paddle.Rect.X
-	// 	} else {
-	// 		//node.UpdateNode(g.balls[i])
-	// 		g.balls[i].Update()
-	// 	}
-	// }
-
-	// if g.level.TotalHealth <= 0 {
-	// 	g.currLevelNum++
-	// 	g.level = level.NewLevel(g.currLevelNum)
-	// }
 
 	// fmt.Println(g.balls)
-	node.Update(g.level)
+	switch node.Update(g.level) {
+	case level.GameOver:
+		fmt.Println("GAME OVER!")
+		return ErrTerminated // quit game
+	default:
+		break
+	}
 	return nil
 }
 
@@ -297,7 +135,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	// }
 	ebitenutil.DebugPrint(screen, fmt.Sprintf(
 		"lives: %d\nlvl health: %d",
-		g.lives,
+		g.level.Lives,
 		g.level.TotalHealth))
 }
 
@@ -329,7 +167,7 @@ func main() {
 
 	// init paddle
 	// cursorX, _ := ebiten.CursorPosition()
-	game.lives = config.StartingLives
+	//game.lives = config.StartingLives
 	// game.paddle = &entities.Paddle{}
 	// game.paddle.Rect.X = float64(cursorX)
 	// game.paddle.Rect.Y = 200

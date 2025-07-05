@@ -20,8 +20,18 @@ type Level struct {
 	Balls        [config.BallMaxCount]*entities.Ball
 	BallCount    int
 	CurrLevelNum int
-	// TODO: Paddle here
-	// TODO: Balls here
+	Lives        int
+}
+
+// MESSAGES
+const (
+	GameOver node.Message = iota + 1
+	Pause
+)
+
+var messageName = map[node.Message]string{
+	GameOver: "Game over.",
+	Pause:    "Pause",
 }
 
 // Detects a general collision between two Rects
@@ -73,11 +83,14 @@ func (l *Level) LoadFromFile(path string) {
 // returns a pointer to a new level, based on the level number.
 func NewLevel(levelNumber int) *Level {
 	level := Level{}
+	level.BallCount = 1
+	level.Lives = config.StartingLives
 	level.CurrLevelNum = levelNumber
 	levelPath := fmt.Sprintf("levels/level%d.txt", levelNumber)
 	fmt.Println("Loading level from file:", levelPath)
 	level.LoadFromFile(levelPath)
 	level.Paddle = entities.NewPaddle()
+	// TODO: addball function
 	level.Balls[0] = entities.NewBall(
 		config.PlayAreaWidth/2.0,
 		config.PlayAreaHeight/2.0,
@@ -91,21 +104,39 @@ func NewLevel(levelNumber int) *Level {
 func (l *Level) PrintLevel() {
 	for iRow := 0; iRow < config.BrickRowCount; iRow++ {
 		for iColumn := 0; iColumn < config.BrickColumnCount; iColumn++ {
-			var brickType rune = '_'
+			var brickType rune = rune('0')
 			if l.Bricks[iRow][iColumn] == nil {
-				brickType = 0
+				brickType = rune('0')
 			} else {
 				brickType = l.Bricks[iRow][iColumn].BrickType
 			}
-			fmt.Printf("%c", brickType)
+			fmt.Print(string(brickType))
 		}
 		fmt.Println()
 	}
 }
 
-func (l *Level) Update() {
+func (l *Level) Update() node.Message {
 	if l == nil {
-		return
+		return 0
+	}
+	if l.BallCount <= 0 {
+		// lose a life
+		l.Lives--
+		// Game over?
+		if l.Lives < 0 {
+			// TODO: messaging back to parent node
+			return GameOver
+		} else {
+			l.Balls[0] = entities.NewBall(
+				config.PlayAreaWidth/2.0,
+				config.PlayAreaHeight/2.0,
+				config.BallStartingSpeed,
+				config.BallStartingAngle,
+				true,
+			)
+			l.BallCount = 1
+		}
 	}
 	// TODO: Update every node in in the level
 
@@ -217,8 +248,10 @@ func (l *Level) Update() {
 				l.Balls[i].SpeedY = -l.Balls[i].SpeedY
 			} else {
 				l.Balls[i] = nil
-				//fmt.Println("Ball destroyed")
+				fmt.Println("Ball destroyed") // TODO: not destroyed...
+				fmt.Println(l.BallCount)
 				l.BallCount--
+				fmt.Println(l.BallCount)
 			}
 		}
 	}
@@ -260,6 +293,8 @@ func (l *Level) Update() {
 		if l.Balls[i].SpeedY > 0 {
 			l.Balls[i].SpeedY = -l.Balls[i].SpeedY
 		}
+		// speed up the ball
+		l.Balls[i].SpeedBase *= config.BallSpeedIncrement
 
 	}
 	node.Update(l.Paddle)
@@ -286,6 +321,7 @@ func (l *Level) Update() {
 	}
 
 	//fmt.Println(l.Balls)
+	return 0
 }
 
 func (l *Level) Draw(screen *ebiten.Image) {

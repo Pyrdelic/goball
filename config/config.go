@@ -14,10 +14,11 @@ const (
 
 	PaddleStartingWidth = PlayAreaWidth / 6
 
-	BallStartingSpeed = 2.0
-	BallSize          = 5.0
-	BallMaxCount      = 4
-	BallStartingAngle = 360.0 - 12.75
+	BallStartingSpeed  = 2.0
+	BallSize           = 5.0
+	BallMaxCount       = 4
+	BallStartingAngle  = 360.0 - 12.75
+	BallSpeedIncrement = 1.10
 
 	GodMode = false
 )

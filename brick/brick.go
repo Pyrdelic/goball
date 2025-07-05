@@ -6,6 +6,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/pyrdelic/goball/config"
 	"github.com/pyrdelic/goball/entities"
+	"github.com/pyrdelic/goball/node"
 )
 
 const (
@@ -64,11 +65,12 @@ func (b *Brick) Hit() int {
 // 	b = nil
 // }
 
-func (b *Brick) Update() {
+func (b *Brick) Update() node.Message {
 	if b == nil {
-		return
+		return 0
 	}
 	// TODO: collision with Ball (destruction)
+	return 0
 }
 
 func (b *Brick) Draw(screen *ebiten.Image) {

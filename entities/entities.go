@@ -6,6 +6,7 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/pyrdelic/goball/config"
+	"github.com/pyrdelic/goball/node"
 )
 
 // type Updater interface {
@@ -16,10 +17,10 @@ import (
 // 	Draw()
 // }
 
-type Node interface {
-	Update()
-	Draw(*ebiten.Image)
-}
+// type Node interface {
+// 	Update()
+// 	Draw(*ebiten.Image)
+// }
 
 // base struct for entities, with position and size
 // TODO: rename to Rect?
@@ -51,10 +52,10 @@ func NewPaddle() *Paddle {
 	return &paddle
 }
 
-func (p *Paddle) Update() {
+func (p *Paddle) Update() node.Message {
 	//fmt.Println("Paddle update")
 	if p == nil {
-		return
+		return 0
 	}
 	x, _ := ebiten.CursorPosition()
 	// center paddle to cursor
@@ -67,6 +68,7 @@ func (p *Paddle) Update() {
 		x = int(config.PlayAreaWidth - p.Rect.W)
 	}
 	p.Rect.X = float64(x)
+	return 0
 }
 
 func (p *Paddle) Draw(screen *ebiten.Image) {
@@ -97,11 +99,12 @@ type Brick struct {
 	//Entity
 }
 
-func (b *Brick) Update() {
+func (b *Brick) Update() node.Message {
 	if b == nil {
-		return
+		return 0
 	}
 	// TODO: collision with Ball (destruction)
+	return 0
 }
 
 func (b *Brick) Draw(screen *ebiten.Image) {
@@ -128,15 +131,16 @@ type Ball struct {
 	//Entity
 }
 
-func (b *Ball) Update() {
+func (b *Ball) Update() node.Message {
 	if b == nil {
-		return
+		return 0
 	}
 	//b.Rect.Y = b.Rect.Y + b.Speed
 	if !b.Grabbed {
 		b.Rect.Y = b.Rect.Y + b.SpeedY
 		b.Rect.X = b.Rect.X + b.SpeedX
 	}
+	return 0
 }
 
 func (b *Ball) Draw(screen *ebiten.Image) {
