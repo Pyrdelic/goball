@@ -1,19 +1,45 @@
 package menu
 
-import "github.com/pyrdelic/goball/entities"
+import (
+	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/pyrdelic/goball/button"
+	"github.com/pyrdelic/goball/node"
+)
 
-type Button struct {
-	entities.Rect
+type PauseMenu struct {
+	ExitGameButton   *button.Button
+	ResumeGameButton *button.Button
 }
 
-// Clicked checks wheter x, y within Button Rect
-func (b *Button) Clicked(x, y int) bool {
-	if b == nil {
-		return false
+const (
+	ExitGameButtonPressed node.Message = iota + 1
+	ResumeButtonPressed
+)
+
+func NewPauseMenu() *PauseMenu {
+	pm := PauseMenu{}
+	pm.ExitGameButton = button.NewButton(100, 100, 30, 30)
+	pm.ResumeGameButton = button.NewButton(150, 150, 30, 30)
+	return &pm
+}
+
+func (pm *PauseMenu) Update() node.Message {
+	if pm == nil {
+		return 0
 	}
-	if x >= int(b.X) && x <= int(b.W) &&
-		y >= int(b.Y) && y <= int(b.H) {
-		return true
+	if pm.ResumeGameButton.IsJustClicked() {
+		return ResumeButtonPressed
 	}
-	return false
+	if pm.ExitGameButton.IsJustClicked() {
+		return ExitGameButtonPressed
+	}
+	return 0
+}
+
+func (pm *PauseMenu) Draw(screen *ebiten.Image) {
+	if pm == nil {
+		return
+	}
+	pm.ExitGameButton.Draw(screen)
+	pm.ResumeGameButton.Draw(screen)
 }
