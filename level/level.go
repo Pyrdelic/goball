@@ -138,12 +138,7 @@ func (l *Level) Update() node.Message {
 			l.BallCount = 1
 		}
 	}
-	// TODO: Update every node in in the level
 
-	// if ebiten.IsKeyPressed(ebiten.KeyEscape) {
-	// 	// We exit the game by returning a custom error
-	// 	return ErrTerminated
-	// }
 	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
 		for i := range len(l.Balls) {
 			if l.Balls[i] == nil {

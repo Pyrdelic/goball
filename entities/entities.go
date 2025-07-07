@@ -9,24 +9,7 @@ import (
 	"github.com/pyrdelic/goball/node"
 )
 
-// type Updater interface {
-// 	Update()
-// }
-
-// type Drawer interface {
-// 	Draw()
-// }
-
-// type Node interface {
-// 	Update()
-// 	Draw(*ebiten.Image)
-// }
-
 // base struct for entities, with position and size
-// TODO: rename to Rect?
-type Entity struct {
-	X, Y, W, H int
-}
 
 type Rect struct {
 	X, Y, W, H float64
