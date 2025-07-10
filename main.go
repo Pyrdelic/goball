@@ -11,6 +11,7 @@ import (
 	"github.com/pyrdelic/goball/config"
 	"github.com/pyrdelic/goball/entities"
 	"github.com/pyrdelic/goball/level"
+	"github.com/pyrdelic/goball/menu"
 	"github.com/pyrdelic/goball/node"
 )
 
@@ -22,7 +23,8 @@ type Game struct {
 	BallCount int
 	//lives        int
 	level        *level.Level
-	CurrScene    *node.Node
+	PauseMenu    *menu.PauseMenu
+	CurrScene    node.Node
 	currLevelNum int
 	GameOver     bool
 }
@@ -31,28 +33,43 @@ func (g *Game) Update() error {
 
 	// update active scene
 
-	if ebiten.IsKeyPressed(ebiten.KeyEscape) {
-		// We exit the game by returning a custom error
-		return ErrTerminated
+	message := node.Update(g.CurrScene)
+	if message.Msg != 0 {
+		fmt.Println("TypeStr:", message.TypeStr, "Msg:", message.Msg)
 	}
-
-	// fmt.Println(g.balls)
-	switch node.Update(g.level) {
-	// TODO: move to level package
-	case level.GameOver:
-		fmt.Println("GAME OVER!")
-		return ErrTerminated // quit game
-	case level.Pause:
-		// Switch current scene to pause menu
+	switch message.TypeStr {
+	case "Level":
+		switch message.Msg {
+		case level.GameOver:
+			fmt.Println("GAME OVER")
+			// TODO: Game over / hi-score scene
+			return ErrTerminated // exit game
+		case level.Pause:
+			ebiten.SetCursorMode(ebiten.CursorModeVisible)
+			fmt.Println("PAUSE")
+			g.CurrScene = g.PauseMenu
+			// TODO: switch current scene to PauseMenu
+		}
+	case "PauseMenu":
+		switch message.Msg {
+		case menu.ExitGameButtonPressed:
+			fmt.Println("EXITING GAME")
+			return ErrTerminated
+		case menu.ResumeButtonPressed:
+			// TODO: Switch current scene back to level
+			fmt.Println("RESUMING")
+			ebiten.SetCursorMode(ebiten.CursorModeHidden)
+			g.CurrScene = g.level
+		}
 	default:
-		break
+		fmt.Println("Unknown scene")
 	}
 	return nil
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
 
-	node.Draw(g.level, screen)
+	node.Draw(g.CurrScene, screen)
 
 	ebitenutil.DebugPrint(screen, fmt.Sprintf(
 		"lives: %d\nlvl health: %d",
@@ -74,6 +91,9 @@ func main() {
 
 	game := Game{}
 
+	// init pause menu
+	game.PauseMenu = menu.NewPauseMenu()
+
 	// init balls
 	game.balls[0] = entities.NewBall(
 		100.0,
@@ -90,6 +110,8 @@ func main() {
 	game.currLevelNum = 1
 	game.level = level.NewLevel(game.currLevelNum)
 	game.level.PrintLevel()
+
+	game.CurrScene = game.level
 
 	ebiten.SetVsyncEnabled(false)
 	ebiten.SetCursorMode(ebiten.CursorModeHidden)

@@ -11,13 +11,13 @@ import (
 )
 
 const (
-	Clicked node.Message = iota + 1
+	Clicked int = iota + 1
 )
 
 type Button struct {
 	entities.Rect
 	Image          *ebiten.Image
-	ClickedMessage node.Message
+	ClickedMessage int
 }
 
 // NewButton returns a pointer to a new Button.
@@ -39,9 +39,10 @@ func (b *Button) IsJustClicked() bool {
 		return false
 	}
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+
 		x, y := ebiten.CursorPosition()
-		if x >= int(b.X) && x <= int(b.W) &&
-			y >= int(b.Y) && y <= int(b.H) {
+		if x >= int(b.Rect.X) && x <= int(b.Rect.X+b.Rect.W) &&
+			y >= int(b.Rect.Y) && y <= int(b.Rect.Y+b.Rect.H) {
 			return true
 		}
 	}
@@ -52,7 +53,10 @@ func (b *Button) Update() node.Message {
 	if b.IsJustClicked() {
 		fmt.Println("Button just clicked")
 	}
-	return 0
+	return node.Message{
+		TypeStr: "Button",
+		Msg:     Clicked,
+	}
 }
 
 func (b *Button) Draw(screen *ebiten.Image) {

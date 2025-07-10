@@ -1,6 +1,8 @@
 package menu
 
 import (
+	"fmt"
+
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/pyrdelic/goball/button"
 	"github.com/pyrdelic/goball/node"
@@ -12,7 +14,7 @@ type PauseMenu struct {
 }
 
 const (
-	ExitGameButtonPressed node.Message = iota + 1
+	ExitGameButtonPressed int = iota + 1
 	ResumeButtonPressed
 )
 
@@ -25,15 +27,28 @@ func NewPauseMenu() *PauseMenu {
 
 func (pm *PauseMenu) Update() node.Message {
 	if pm == nil {
-		return 0
+		return node.Message{
+			TypeStr: "nil",
+			Msg:     0,
+		}
 	}
 	if pm.ResumeGameButton.IsJustClicked() {
-		return ResumeButtonPressed
+		fmt.Println("Resume just clicked")
+		return node.Message{
+			TypeStr: "PauseMenu",
+			Msg:     ResumeButtonPressed,
+		}
 	}
 	if pm.ExitGameButton.IsJustClicked() {
-		return ExitGameButtonPressed
+		return node.Message{
+			TypeStr: "PauseMenu",
+			Msg:     ExitGameButtonPressed,
+		}
 	}
-	return 0
+	return node.Message{
+		TypeStr: "PauseMenu",
+		Msg:     0,
+	}
 }
 
 func (pm *PauseMenu) Draw(screen *ebiten.Image) {

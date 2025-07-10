@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/pyrdelic/goball/brick"
 	"github.com/pyrdelic/goball/config"
 	"github.com/pyrdelic/goball/entities"
@@ -25,14 +26,14 @@ type Level struct {
 
 // MESSAGES
 const (
-	GameOver node.Message = iota + 1
+	GameOver int = iota + 1
 	Pause
 )
 
-var messageName = map[node.Message]string{
-	GameOver: "Game over.",
-	Pause:    "Pause",
-}
+// var messageName = map[node.Message]string{
+// 	GameOver: "Game over.",
+// 	Pause:    "Pause",
+// }
 
 // Detects a general collision between two Rects
 func isColliding(a *entities.Rect, b *entities.Rect) bool {
@@ -118,15 +119,28 @@ func (l *Level) PrintLevel() {
 
 func (l *Level) Update() node.Message {
 	if l == nil {
-		return 0
+		return node.Message{
+			TypeStr: "nil",
+			Msg:     0,
+		}
 	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+		return node.Message{
+			TypeStr: "Level",
+			Msg:     Pause,
+		}
+	}
+
 	if l.BallCount <= 0 {
 		// lose a life
 		l.Lives--
 		// Game over?
 		if l.Lives < 0 {
 			// TODO: messaging back to parent node
-			return GameOver
+			return node.Message{
+				TypeStr: "Level",
+				Msg:     GameOver,
+			}
 		} else {
 			l.Balls[0] = entities.NewBall(
 				config.PlayAreaWidth/2.0,
@@ -316,7 +330,10 @@ func (l *Level) Update() node.Message {
 	}
 
 	//fmt.Println(l.Balls)
-	return 0
+	return node.Message{
+		TypeStr: "Level",
+		Msg:     0,
+	}
 }
 
 func (l *Level) Draw(screen *ebiten.Image) {

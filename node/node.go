@@ -2,7 +2,10 @@ package node
 
 import "github.com/hajimehoshi/ebiten/v2"
 
-type Message int
+type Message struct {
+	TypeStr string
+	Msg     int
+}
 
 type Node interface {
 	Update() Message

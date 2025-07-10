@@ -38,7 +38,10 @@ func NewPaddle() *Paddle {
 func (p *Paddle) Update() node.Message {
 	//fmt.Println("Paddle update")
 	if p == nil {
-		return 0
+		return node.Message{
+			TypeStr: "Paddle",
+			Msg:     0,
+		}
 	}
 	x, _ := ebiten.CursorPosition()
 	// center paddle to cursor
@@ -51,7 +54,10 @@ func (p *Paddle) Update() node.Message {
 		x = int(config.PlayAreaWidth - p.Rect.W)
 	}
 	p.Rect.X = float64(x)
-	return 0
+	return node.Message{
+		TypeStr: "Paddle",
+		Msg:     0,
+	}
 }
 
 func (p *Paddle) Draw(screen *ebiten.Image) {
@@ -84,10 +90,15 @@ type Brick struct {
 
 func (b *Brick) Update() node.Message {
 	if b == nil {
-		return 0
+		return node.Message{
+			TypeStr: "Brick",
+			Msg:     0,
+		}
 	}
 	// TODO: collision with Ball (destruction)
-	return 0
+	return node.Message{
+		TypeStr: "Brick",
+	}
 }
 
 func (b *Brick) Draw(screen *ebiten.Image) {
@@ -116,14 +127,20 @@ type Ball struct {
 
 func (b *Ball) Update() node.Message {
 	if b == nil {
-		return 0
+		return node.Message{
+			TypeStr: "Ball",
+			Msg:     0,
+		}
 	}
 	//b.Rect.Y = b.Rect.Y + b.Speed
 	if !b.Grabbed {
 		b.Rect.Y = b.Rect.Y + b.SpeedY
 		b.Rect.X = b.Rect.X + b.SpeedX
 	}
-	return 0
+	return node.Message{
+		TypeStr: "Ball",
+		Msg:     0,
+	}
 }
 
 func (b *Ball) Draw(screen *ebiten.Image) {

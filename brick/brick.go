@@ -67,10 +67,16 @@ func (b *Brick) Hit() int {
 
 func (b *Brick) Update() node.Message {
 	if b == nil {
-		return 0
+		return node.Message{
+			TypeStr: "Brick",
+			Msg:     0,
+		}
 	}
 	// TODO: collision with Ball (destruction)
-	return 0
+	return node.Message{
+		TypeStr: "Brick",
+		Msg:     0,
+	}
 }
 
 func (b *Brick) Draw(screen *ebiten.Image) {
