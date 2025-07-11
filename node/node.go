@@ -3,8 +3,9 @@ package node
 import "github.com/hajimehoshi/ebiten/v2"
 
 type Message struct {
-	TypeStr string
-	Msg     int
+	TypeStr  string
+	Msg      int
+	IntExtra int
 }
 
 type Node interface {

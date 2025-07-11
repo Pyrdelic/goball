@@ -13,6 +13,7 @@ import (
 	"github.com/pyrdelic/goball/level"
 	"github.com/pyrdelic/goball/menu"
 	"github.com/pyrdelic/goball/node"
+	"github.com/pyrdelic/goball/player"
 )
 
 type Game struct {
@@ -27,6 +28,8 @@ type Game struct {
 	CurrScene    node.Node
 	currLevelNum int
 	GameOver     bool
+
+	Player *player.Player
 }
 
 func (g *Game) Update() error {
@@ -39,6 +42,7 @@ func (g *Game) Update() error {
 	}
 	switch message.TypeStr {
 	case "Level":
+		g.Player.Score += message.IntExtra
 		switch message.Msg {
 		case level.GameOver:
 			fmt.Println("GAME OVER")
@@ -72,8 +76,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	node.Draw(g.CurrScene, screen)
 
 	ebitenutil.DebugPrint(screen, fmt.Sprintf(
-		"lives: %d\nlvl health: %d",
+		"lives: %d\nscore: %d\nlvl health: %d",
 		g.level.Lives,
+		g.Player.Score,
 		g.level.TotalHealth))
 }
 
@@ -90,6 +95,8 @@ func main() {
 	ebiten.SetWindowTitle("GO-BALL")
 
 	game := Game{}
+	game.Player = &player.Player{}
+	//game.Player.Lives = 3
 
 	// init pause menu
 	game.PauseMenu = menu.NewPauseMenu()

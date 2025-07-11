@@ -124,6 +124,7 @@ func (l *Level) Update() node.Message {
 			Msg:     0,
 		}
 	}
+	tickScore := 0
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 		return node.Message{
 			TypeStr: "Level",
@@ -212,7 +213,9 @@ func (l *Level) Update() node.Message {
 					}
 					//collidedBrick.Health--
 					// damage the brick
-					l.TotalHealth -= collidedBrick.Hit()
+					scoreGained, damageDealt := collidedBrick.Hit()
+					l.TotalHealth -= damageDealt
+					tickScore += scoreGained
 				}
 			}
 		}
@@ -227,6 +230,7 @@ func (l *Level) Update() node.Message {
 			if l.Bricks[iRow][iColumn].Health <= 0 &&
 				l.Bricks[iRow][iColumn].Destructable {
 				l.Bricks[iRow][iColumn] = nil
+				tickScore += config.BrickDestroyedScore
 			}
 		}
 	}
@@ -331,8 +335,9 @@ func (l *Level) Update() node.Message {
 
 	//fmt.Println(l.Balls)
 	return node.Message{
-		TypeStr: "Level",
-		Msg:     0,
+		TypeStr:  "Level",
+		Msg:      0,
+		IntExtra: tickScore,
 	}
 }
 

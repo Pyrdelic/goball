@@ -44,19 +44,19 @@ type Brick struct {
 	//Entity
 }
 
-// Hit reduces Bricks health accordily and returns damage dealt
-func (b *Brick) Hit() int {
+// Hit reduces Bricks health accordily and returns score gained and damage dealt
+func (b *Brick) Hit() (int, int) {
 	if b == nil {
-		return 0
+		return 0, 0
 	}
 	switch b.BrickType {
 	case BrickTypeBasic:
 		b.Health--
-		return 1 // return damage dealt
+		return config.BrickHitScore, 1 // return damage dealt
 	case BrickTypeSteel:
-		return 0 // steel brick is indestructible
+		return 0, 0 // steel brick is indestructible
 	default:
-		return 0
+		return 0, 0
 	}
 }
 

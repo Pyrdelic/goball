@@ -6,11 +6,13 @@ const (
 
 	StartingLives = 3
 
-	BrickColumnCount = 16
-	BrickRowCount    = 6
-	BrickCount       = BrickColumnCount * BrickRowCount
-	BrickHeight      = 10
-	BrickWidth       = PlayAreaWidth / BrickColumnCount
+	BrickColumnCount    = 16
+	BrickRowCount       = 6
+	BrickCount          = BrickColumnCount * BrickRowCount
+	BrickHeight         = 10
+	BrickWidth          = PlayAreaWidth / BrickColumnCount
+	BrickHitScore       = 10
+	BrickDestroyedScore = 100
 
 	PaddleStartingWidth = PlayAreaWidth / 6
 
