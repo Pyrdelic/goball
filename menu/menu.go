@@ -13,9 +13,15 @@ type PauseMenu struct {
 	ResumeGameButton *button.Button
 }
 
+type MainMenu struct {
+	ExitGameButton  *button.Button
+	StartGameButton *button.Button
+}
+
 const (
 	ExitGameButtonPressed int = iota + 1
 	ResumeButtonPressed
+	StartGameButtonPressed
 )
 
 func NewPauseMenu() *PauseMenu {
@@ -25,6 +31,7 @@ func NewPauseMenu() *PauseMenu {
 	return &pm
 }
 
+// Pause menu
 func (pm *PauseMenu) Update() node.Message {
 	if pm == nil {
 		return node.Message{
@@ -57,4 +64,44 @@ func (pm *PauseMenu) Draw(screen *ebiten.Image) {
 	}
 	pm.ExitGameButton.Draw(screen)
 	pm.ResumeGameButton.Draw(screen)
+}
+
+// Main menu
+func (mm *MainMenu) Update() node.Message {
+	if mm == nil {
+		return node.Message{
+			TypeStr: "MainMenu",
+		}
+	}
+	if mm.ExitGameButton.IsJustClicked() {
+		return node.Message{
+			TypeStr: "MainMenu",
+			Msg:     ExitGameButtonPressed,
+		}
+	}
+	if mm.StartGameButton.IsJustClicked() {
+		return node.Message{
+			TypeStr: "MainMenu",
+			Msg:     StartGameButtonPressed,
+		}
+	}
+	return node.Message{
+		TypeStr: "MainMenu",
+	}
+}
+
+func (mm *MainMenu) Draw(screen *ebiten.Image) {
+	node.Draw(mm.ExitGameButton, screen)
+	node.Draw(mm.StartGameButton, screen)
+}
+
+func NewMainMenu() *MainMenu {
+	mm := MainMenu{}
+	mm.ExitGameButton = button.NewButton(
+		100, 100, 50, 50,
+	)
+	mm.StartGameButton = button.NewButton(
+		150, 150, 50, 50,
+	)
+	return &mm
 }

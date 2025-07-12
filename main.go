@@ -24,6 +24,7 @@ type Game struct {
 	BallCount int
 	//lives        int
 	level        *level.Level
+	MainMenu     *menu.MainMenu
 	PauseMenu    *menu.PauseMenu
 	CurrScene    node.Node
 	currLevelNum int
@@ -41,6 +42,14 @@ func (g *Game) Update() error {
 		fmt.Println("TypeStr:", message.TypeStr, "Msg:", message.Msg)
 	}
 	switch message.TypeStr {
+	case "MainMenu":
+		switch message.Msg {
+		case menu.ExitGameButtonPressed:
+			return ErrTerminated // exit game
+		case menu.StartGameButtonPressed:
+			ebiten.SetCursorMode(ebiten.CursorModeHidden)
+			g.CurrScene = g.level
+		}
 	case "Level":
 		g.Player.Score += message.IntExtra
 		switch message.Msg {
@@ -76,10 +85,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	node.Draw(g.CurrScene, screen)
 
 	ebitenutil.DebugPrint(screen, fmt.Sprintf(
-		"lives: %d\nscore: %d\nlvl health: %d",
+		"lives: %d\nscore: %d",
 		g.level.Lives,
-		g.Player.Score,
-		g.level.TotalHealth))
+		g.Player.Score))
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
@@ -100,6 +108,7 @@ func main() {
 
 	// init pause menu
 	game.PauseMenu = menu.NewPauseMenu()
+	game.MainMenu = menu.NewMainMenu()
 
 	// init balls
 	game.balls[0] = entities.NewBall(
@@ -118,10 +127,10 @@ func main() {
 	game.level = level.NewLevel(game.currLevelNum)
 	game.level.PrintLevel()
 
-	game.CurrScene = game.level
+	game.CurrScene = game.MainMenu
 
 	ebiten.SetVsyncEnabled(false)
-	ebiten.SetCursorMode(ebiten.CursorModeHidden)
+	//ebiten.SetCursorMode(ebiten.CursorModeHidden)
 
 	if err := ebiten.RunGame(&game); err != nil {
 		if err == ErrTerminated {
