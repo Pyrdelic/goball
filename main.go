@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 
@@ -8,6 +9,8 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
+	"github.com/hajimehoshi/ebiten/v2/text/v2"
 	"github.com/pyrdelic/goball/config"
 	"github.com/pyrdelic/goball/entities"
 	"github.com/pyrdelic/goball/level"
@@ -32,6 +35,8 @@ type Game struct {
 
 	Player *player.Player
 }
+
+var faceSource *text.GoTextFaceSource
 
 func (g *Game) Update() error {
 
@@ -88,6 +93,14 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		"lives: %d\nscore: %d",
 		g.level.Lives,
 		g.Player.Score))
+
+	// text test
+	str := "asdfasdf"
+	text.Draw(screen, str, &text.GoTextFace{
+		Source: faceSource,
+		Size:   24,
+	}, &text.DrawOptions{})
+
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
@@ -97,10 +110,19 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 // Custom error to exit the game loop in a regular way.
 var ErrTerminated = errors.New("terminated")
 
+func initFont() {
+	face, err := text.NewGoTextFaceSource(bytes.NewReader(fonts.MPlus1pRegular_ttf))
+	if err != nil {
+		log.Fatal(err)
+	}
+	faceSource = face
+}
+
 func main() {
 
 	ebiten.SetWindowSize(640, 480)
 	ebiten.SetWindowTitle("GO-BALL")
+	initFont()
 
 	game := Game{}
 	game.Player = &player.Player{}

@@ -26,8 +26,8 @@ const (
 
 func NewPauseMenu() *PauseMenu {
 	pm := PauseMenu{}
-	pm.ExitGameButton = button.NewButton(100, 100, 30, 30)
-	pm.ResumeGameButton = button.NewButton(150, 150, 30, 30)
+	pm.ExitGameButton = button.NewButton(100, 100, 30, 30, "Exit")
+	pm.ResumeGameButton = button.NewButton(150, 150, 30, 30, "Resume")
 	return &pm
 }
 
@@ -98,10 +98,10 @@ func (mm *MainMenu) Draw(screen *ebiten.Image) {
 func NewMainMenu() *MainMenu {
 	mm := MainMenu{}
 	mm.ExitGameButton = button.NewButton(
-		100, 100, 50, 50,
+		100, 100, 50, 50, "Exit",
 	)
 	mm.StartGameButton = button.NewButton(
-		150, 150, 50, 50,
+		150, 150, 50, 50, "New Game",
 	)
 	return &mm
 }
