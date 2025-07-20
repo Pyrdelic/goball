@@ -1,19 +1,27 @@
 package menu
 
 import (
+	"bytes"
 	"fmt"
+	"image/color"
+	"log"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
+	"github.com/hajimehoshi/ebiten/v2/text/v2"
 	"github.com/pyrdelic/goball/button"
+	"github.com/pyrdelic/goball/config"
 	"github.com/pyrdelic/goball/node"
 )
 
 type PauseMenu struct {
+	Text             string
 	ExitGameButton   *button.Button
 	ResumeGameButton *button.Button
 }
 
 type MainMenu struct {
+	Text            string
 	ExitGameButton  *button.Button
 	StartGameButton *button.Button
 }
@@ -24,8 +32,41 @@ const (
 	StartGameButtonPressed
 )
 
+// Common text face for menu title
+var titleTextFaceSource *text.GoTextFaceSource
+var titleTextFaceSourceInitialized bool = false
+
+// init common text for buttons
+func initTitleText() {
+	if !titleTextFaceSourceInitialized {
+		face, err := text.NewGoTextFaceSource(
+			bytes.NewReader(fonts.MPlus1pRegular_ttf))
+		if err != nil {
+			log.Fatal(err)
+		}
+		titleTextFaceSource = face
+		titleTextFaceSourceInitialized = true
+	}
+}
+
+func drawTitleText(titleText string, screen *ebiten.Image) {
+	textop := text.DrawOptions{}
+	textop.GeoM.Translate(float64(config.MenuTitleTextX), float64(config.MenuTitleTextY))
+	textop.ColorScale.ScaleWithColor(color.White)
+	text.Draw(
+		screen,
+		titleText,
+		&text.GoTextFace{
+			Source: titleTextFaceSource,
+			Size:   20,
+		},
+		&textop)
+}
+
 func NewPauseMenu() *PauseMenu {
+	initTitleText()
 	pm := PauseMenu{}
+	pm.Text = "Pause"
 	pm.ExitGameButton = button.NewButton(100, 100, 30, 30, "Exit")
 	pm.ResumeGameButton = button.NewButton(150, 150, 30, 30, "Resume")
 	return &pm
@@ -62,6 +103,7 @@ func (pm *PauseMenu) Draw(screen *ebiten.Image) {
 	if pm == nil {
 		return
 	}
+	drawTitleText(pm.Text, screen)
 	pm.ExitGameButton.Draw(screen)
 	pm.ResumeGameButton.Draw(screen)
 }
@@ -91,12 +133,15 @@ func (mm *MainMenu) Update() node.Message {
 }
 
 func (mm *MainMenu) Draw(screen *ebiten.Image) {
+	drawTitleText(mm.Text, screen)
 	node.Draw(mm.ExitGameButton, screen)
 	node.Draw(mm.StartGameButton, screen)
 }
 
 func NewMainMenu() *MainMenu {
+	initTitleText()
 	mm := MainMenu{}
+	mm.Text = "GO-BALL"
 	mm.ExitGameButton = button.NewButton(
 		100, 100, 50, 50, "Exit",
 	)
@@ -104,4 +149,48 @@ func NewMainMenu() *MainMenu {
 		150, 150, 50, 50, "New Game",
 	)
 	return &mm
+}
+
+type GameOverMenu struct {
+	Text           string
+	NewGameButton  *button.Button
+	ExitGameButton *button.Button
+}
+
+func (gom *GameOverMenu) Update() node.Message {
+	if gom == nil {
+		return node.Message{TypeStr: "GameOverMenu"}
+	}
+	if gom.ExitGameButton.IsJustClicked() {
+		return node.Message{
+			TypeStr: "GameOverMenu",
+			Msg:     ExitGameButtonPressed,
+		}
+	}
+	if gom.NewGameButton.IsJustClicked() {
+		return node.Message{
+			TypeStr: "GameOverMenu",
+			Msg:     StartGameButtonPressed,
+		}
+	}
+	return node.Message{TypeStr: "GameOverMenu"}
+}
+
+func (gom *GameOverMenu) Draw(screen *ebiten.Image) {
+	if gom == nil {
+		return
+	}
+	drawTitleText(gom.Text, screen)
+	node.Draw(gom.ExitGameButton, screen)
+	node.Draw(gom.NewGameButton, screen)
+
+}
+
+func NewGameOverMenu() *GameOverMenu {
+	initTitleText()
+	gom := GameOverMenu{}
+	gom.Text = "Game over."
+	gom.NewGameButton = button.NewButton(100, 100, config.ButtonWidth, config.ButtonHeight, "New Game")
+	gom.ExitGameButton = button.NewButton(150, 150, config.ButtonWidth, config.ButtonHeight, "Exit Game")
+	return &gom
 }

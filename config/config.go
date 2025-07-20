@@ -22,5 +22,11 @@ const (
 	BallStartingAngle  = 360.0 - 12.75
 	BallSpeedIncrement = 1.10
 
+	ButtonHeight = 50
+	ButtonWidth  = 50
+
+	MenuTitleTextX = PlayAreaWidth / 8
+	MenuTitleTextY = PlayAreaHeight / 8
+
 	GodMode = false
 )

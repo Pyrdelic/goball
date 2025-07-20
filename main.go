@@ -19,6 +19,8 @@ import (
 	"github.com/pyrdelic/goball/player"
 )
 
+// TODO: Proper event system
+
 type Game struct {
 	// TODO: Paddle to level
 	// TODO: Balls to level
@@ -29,6 +31,7 @@ type Game struct {
 	level        *level.Level
 	MainMenu     *menu.MainMenu
 	PauseMenu    *menu.PauseMenu
+	GameOverMenu *menu.GameOverMenu
 	CurrScene    node.Node
 	currLevelNum int
 	GameOver     bool
@@ -94,12 +97,12 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		g.level.Lives,
 		g.Player.Score))
 
-	// text test
-	str := "asdfasdf"
-	text.Draw(screen, str, &text.GoTextFace{
-		Source: faceSource,
-		Size:   24,
-	}, &text.DrawOptions{})
+	// // text test
+	// str := "asdfasdf"
+	// text.Draw(screen, str, &text.GoTextFace{
+	// 	Source: faceSource,
+	// 	Size:   24,
+	// }, &text.DrawOptions{})
 
 }
 
@@ -128,9 +131,10 @@ func main() {
 	game.Player = &player.Player{}
 	//game.Player.Lives = 3
 
-	// init pause menu
+	// init menus
 	game.PauseMenu = menu.NewPauseMenu()
 	game.MainMenu = menu.NewMainMenu()
+	game.GameOverMenu = menu.NewGameOverMenu()
 
 	// init balls
 	game.balls[0] = entities.NewBall(
