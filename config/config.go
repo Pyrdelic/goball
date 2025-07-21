@@ -28,5 +28,7 @@ const (
 	MenuTitleTextX = PlayAreaWidth / 8
 	MenuTitleTextY = PlayAreaHeight / 8
 
-	GodMode = false
+	HiScoreTopCount = 10
+	HiScoreNameLen  = 3
+	GodMode         = false
 )

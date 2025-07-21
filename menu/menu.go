@@ -26,6 +26,12 @@ type MainMenu struct {
 	StartGameButton *button.Button
 }
 
+type Menu struct {
+	typeStr string
+	Title   string
+	Buttons []*button.Button
+}
+
 const (
 	ExitGameButtonPressed int = iota + 1
 	ResumeButtonPressed
@@ -61,6 +67,29 @@ func drawTitleText(titleText string, screen *ebiten.Image) {
 			Size:   20,
 		},
 		&textop)
+}
+
+// // NewMenu returns a pointer to a new empty Menu.
+// func NewMenu(typeStr string) *Menu {
+// 	m := Menu{}
+// 	m.TypeStr = typeStr
+// 	return &m
+// }
+
+// func (m *Menu) Update() node.Message {
+// 	if m == nil {
+// 		return node.Message{}
+// 	}
+
+// 	for i := range len(m.Buttons) {
+// 		event := node.Update(m.Buttons[i])
+
+// 	}
+// 	return node.Message{TypeStr: m.Title}
+// }
+
+func (m *Menu) Draw(screen *ebiten.Image) {
+
 }
 
 func NewPauseMenu() *PauseMenu {

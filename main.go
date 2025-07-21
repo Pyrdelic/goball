@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 
@@ -9,8 +8,6 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
-	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
-	"github.com/hajimehoshi/ebiten/v2/text/v2"
 	"github.com/pyrdelic/goball/config"
 	"github.com/pyrdelic/goball/entities"
 	"github.com/pyrdelic/goball/level"
@@ -32,14 +29,14 @@ type Game struct {
 	MainMenu     *menu.MainMenu
 	PauseMenu    *menu.PauseMenu
 	GameOverMenu *menu.GameOverMenu
-	CurrScene    node.Node
+	CurrScene    node.Node // interface as a type (no * needed)
 	currLevelNum int
 	GameOver     bool
 
 	Player *player.Player
 }
 
-var faceSource *text.GoTextFaceSource
+//var faceSource *text.GoTextFaceSource
 
 func (g *Game) Update() error {
 
@@ -64,7 +61,8 @@ func (g *Game) Update() error {
 		case level.GameOver:
 			fmt.Println("GAME OVER")
 			// TODO: Game over / hi-score scene
-			return ErrTerminated // exit game
+			ebiten.SetCursorMode(ebiten.CursorModeVisible)
+			g.CurrScene = g.GameOverMenu
 		case level.Pause:
 			ebiten.SetCursorMode(ebiten.CursorModeVisible)
 			fmt.Println("PAUSE")
@@ -80,6 +78,20 @@ func (g *Game) Update() error {
 			// TODO: Switch current scene back to level
 			fmt.Println("RESUMING")
 			ebiten.SetCursorMode(ebiten.CursorModeHidden)
+			g.CurrScene = g.level
+		}
+	case "GameOverMenu":
+		switch message.Msg {
+		case menu.ExitGameButtonPressed:
+			fmt.Println("EXITING GAME")
+			return ErrTerminated
+		case menu.StartGameButtonPressed:
+			ebiten.SetCursorMode(ebiten.CursorModeHidden)
+			// reset score, lives
+			g.Player.Score = 0
+			g.level.Lives = config.StartingLives
+			// init a new level
+			g.level = level.NewLevel(1)
 			g.CurrScene = g.level
 		}
 	default:
@@ -113,19 +125,19 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 // Custom error to exit the game loop in a regular way.
 var ErrTerminated = errors.New("terminated")
 
-func initFont() {
-	face, err := text.NewGoTextFaceSource(bytes.NewReader(fonts.MPlus1pRegular_ttf))
-	if err != nil {
-		log.Fatal(err)
-	}
-	faceSource = face
-}
+// func initFont() {
+// 	face, err := text.NewGoTextFaceSource(bytes.NewReader(fonts.MPlus1pRegular_ttf))
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// 	faceSource = face
+// }
 
 func main() {
 
 	ebiten.SetWindowSize(640, 480)
 	ebiten.SetWindowTitle("GO-BALL")
-	initFont()
+	//initFont()
 
 	game := Game{}
 	game.Player = &player.Player{}
