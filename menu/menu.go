@@ -14,6 +14,13 @@ import (
 	"github.com/pyrdelic/goball/node"
 )
 
+const (
+	ExitGameButtonPressed int = iota + 1
+	ResumeButtonPressed
+	StartGameButtonPressed
+	MainMenuButtonPressed
+)
+
 type PauseMenu struct {
 	Text             string
 	ExitGameButton   *button.Button
@@ -32,18 +39,14 @@ type Menu struct {
 	Buttons []*button.Button
 }
 
-const (
-	ExitGameButtonPressed int = iota + 1
-	ResumeButtonPressed
-	StartGameButtonPressed
-)
-
 // Common text face for menu title
 var titleTextFaceSource *text.GoTextFaceSource
 var titleTextFaceSourceInitialized bool = false
+var contentTextFaceSource *text.GoTextFaceSource
+var contentTextFaceSourceInitialized bool = false
 
 // init common text for buttons
-func initTitleText() {
+func initTitleTextFaceSource() {
 	if !titleTextFaceSourceInitialized {
 		face, err := text.NewGoTextFaceSource(
 			bytes.NewReader(fonts.MPlus1pRegular_ttf))
@@ -51,6 +54,18 @@ func initTitleText() {
 			log.Fatal(err)
 		}
 		titleTextFaceSource = face
+		titleTextFaceSourceInitialized = true
+	}
+}
+
+func initContentTextFaceSource() {
+	if !contentTextFaceSourceInitialized {
+		face, err := text.NewGoTextFaceSource(
+			bytes.NewReader(fonts.MPlus1pRegular_ttf))
+		if err != nil {
+			log.Fatal(err)
+		}
+		contentTextFaceSource = face
 		titleTextFaceSourceInitialized = true
 	}
 }
@@ -88,12 +103,12 @@ func drawTitleText(titleText string, screen *ebiten.Image) {
 // 	return node.Message{TypeStr: m.Title}
 // }
 
-func (m *Menu) Draw(screen *ebiten.Image) {
+// func (m *Menu) Draw(screen *ebiten.Image) {
 
-}
+// }
 
 func NewPauseMenu() *PauseMenu {
-	initTitleText()
+	initTitleTextFaceSource()
 	pm := PauseMenu{}
 	pm.Text = "Pause"
 	pm.ExitGameButton = button.NewButton(100, 100, 30, 30, "Exit")
@@ -168,7 +183,7 @@ func (mm *MainMenu) Draw(screen *ebiten.Image) {
 }
 
 func NewMainMenu() *MainMenu {
-	initTitleText()
+	initTitleTextFaceSource()
 	mm := MainMenu{}
 	mm.Text = "GO-BALL"
 	mm.ExitGameButton = button.NewButton(
@@ -216,7 +231,7 @@ func (gom *GameOverMenu) Draw(screen *ebiten.Image) {
 }
 
 func NewGameOverMenu() *GameOverMenu {
-	initTitleText()
+	initTitleTextFaceSource()
 	gom := GameOverMenu{}
 	gom.Text = "Game over."
 	gom.NewGameButton = button.NewButton(100, 100, config.ButtonWidth, config.ButtonHeight, "New Game")

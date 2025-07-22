@@ -17,6 +17,7 @@ type HiScore struct {
 }
 
 func LoadHiScores(hiScores *[config.HiScoreTopCount]HiScore, path string) {
+
 	file, err := os.Open(path)
 	if err != nil {
 		log.Fatal(err)
@@ -44,7 +45,7 @@ func LoadHiScores(hiScores *[config.HiScoreTopCount]HiScore, path string) {
 		continue
 	}
 }
-func WriteHiScores(hiScores *[10]HiScore, path string) {
+func WriteHiScores(hiScores *[config.HiScoreTopCount]HiScore, path string) {
 	file, err := os.Create(path)
 	if err != nil {
 		log.Fatal(err)

@@ -29,6 +29,7 @@ type Game struct {
 	MainMenu     *menu.MainMenu
 	PauseMenu    *menu.PauseMenu
 	GameOverMenu *menu.GameOverMenu
+	HiScoreMenu  *menu.HiScoreMenu
 	CurrScene    node.Node // interface as a type (no * needed)
 	currLevelNum int
 	GameOver     bool
@@ -94,6 +95,11 @@ func (g *Game) Update() error {
 			g.level = level.NewLevel(1)
 			g.CurrScene = g.level
 		}
+	case "HiScoreMenu":
+		switch message.Msg {
+		case menu.MainMenuButtonPressed:
+			g.CurrScene = g.MainMenu
+		}
 	default:
 		fmt.Println("Unknown scene")
 	}
@@ -147,6 +153,7 @@ func main() {
 	game.PauseMenu = menu.NewPauseMenu()
 	game.MainMenu = menu.NewMainMenu()
 	game.GameOverMenu = menu.NewGameOverMenu()
+	game.HiScoreMenu = menu.NewHiScoreMenu()
 
 	// init balls
 	game.balls[0] = entities.NewBall(
@@ -165,7 +172,8 @@ func main() {
 	game.level = level.NewLevel(game.currLevelNum)
 	game.level.PrintLevel()
 
-	game.CurrScene = game.MainMenu
+	//game.CurrScene = game.MainMenu
+	game.CurrScene = game.HiScoreMenu
 
 	ebiten.SetVsyncEnabled(false)
 	//ebiten.SetCursorMode(ebiten.CursorModeHidden)
