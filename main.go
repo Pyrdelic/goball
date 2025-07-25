@@ -25,14 +25,15 @@ type Game struct {
 	balls     [config.BallMaxCount]*entities.Ball
 	BallCount int
 	//lives        int
-	level        *level.Level
-	MainMenu     *menu.MainMenu
-	PauseMenu    *menu.PauseMenu
-	GameOverMenu *menu.GameOverMenu
-	HiScoreMenu  *menu.HiScoreMenu
-	CurrScene    node.Node // interface as a type (no * needed)
-	currLevelNum int
-	GameOver     bool
+	level             *level.Level
+	MainMenu          *menu.MainMenu
+	PauseMenu         *menu.PauseMenu
+	GameOverMenu      *menu.GameOverMenu
+	HiScoreMenu       *menu.HiScoreMenu
+	CurrScene         node.Node // interface as a type (no * needed)
+	currLevelNum      int
+	GameOver          bool
+	HighScoreAchieved bool
 
 	Player *player.Player
 }
@@ -40,9 +41,11 @@ type Game struct {
 //var faceSource *text.GoTextFaceSource
 
 func (g *Game) Update() error {
+	if g == nil {
+		return nil
+	}
 
 	// update active scene
-
 	message := node.Update(g.CurrScene)
 	if message.Msg != 0 {
 		fmt.Println("TypeStr:", message.TypeStr, "Msg:", message.Msg)
@@ -61,7 +64,10 @@ func (g *Game) Update() error {
 		switch message.Msg {
 		case level.GameOver:
 			fmt.Println("GAME OVER")
-			// TODO: Game over / hi-score scene
+
+			g.HiScoreMenu = menu.NewHiScoreMenu(uint64(g.Player.Score))
+			g.CurrScene = g.HiScoreMenu
+
 			ebiten.SetCursorMode(ebiten.CursorModeVisible)
 			g.CurrScene = g.GameOverMenu
 		case level.Pause:
@@ -99,7 +105,13 @@ func (g *Game) Update() error {
 		switch message.Msg {
 		case menu.MainMenuButtonPressed:
 			g.CurrScene = g.MainMenu
+		case menu.KeyPressed:
+			if g.HighScoreAchieved {
+
+			}
+			//fmt.Println("menu.Keypressed:", string(message.IntExtra))
 		}
+
 	default:
 		fmt.Println("Unknown scene")
 	}
@@ -153,7 +165,7 @@ func main() {
 	game.PauseMenu = menu.NewPauseMenu()
 	game.MainMenu = menu.NewMainMenu()
 	game.GameOverMenu = menu.NewGameOverMenu()
-	game.HiScoreMenu = menu.NewHiScoreMenu()
+	game.HiScoreMenu = menu.NewHiScoreMenu(750000)
 
 	// init balls
 	game.balls[0] = entities.NewBall(

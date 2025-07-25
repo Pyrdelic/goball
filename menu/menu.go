@@ -19,6 +19,7 @@ const (
 	ResumeButtonPressed
 	StartGameButtonPressed
 	MainMenuButtonPressed
+	KeyPressed
 )
 
 type PauseMenu struct {
@@ -34,7 +35,7 @@ type MainMenu struct {
 }
 
 type Menu struct {
-	typeStr string
+	//typeStr string
 	Title   string
 	Buttons []*button.Button
 }
