@@ -7,6 +7,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
 	"github.com/pyrdelic/goball/button"
 	"github.com/pyrdelic/goball/config"
@@ -88,6 +89,18 @@ func (hsm *HiScoreMenu) Update() node.Message {
 	if hsm.nameInputEnabled {
 		readChars := []rune{}
 		readChars = ebiten.AppendInputChars(readChars)
+
+		if inpututil.IsKeyJustPressed(ebiten.KeyBackspace) {
+			if len(hsm.HiScores[hsm.newHSPosition].Name) > 0 {
+				hsm.HiScores[hsm.newHSPosition].Name =
+					hsm.HiScores[hsm.newHSPosition].Name[:len(hsm.HiScores[hsm.newHSPosition].Name)-1]
+			}
+		}
+		if inpututil.IsKeyJustPressed(ebiten.KeyEnter) {
+			hsm.nameInputEnabled = false
+			hsm.newHiScoreBoardPos = -1
+		}
+
 		for i := range len(readChars) {
 			if !(utf8.RuneCount([]byte(hsm.HiScoreToSubmit.Name)) < 3) {
 				break
@@ -95,6 +108,7 @@ func (hsm *HiScoreMenu) Update() node.Message {
 			hsm.HiScores[hsm.newHSPosition].Name += string(readChars[i])
 		}
 		hsm.HiScoresStr = hiScoresToStr(hsm.HiScores, hsm.newHiScoreBoardPos)
+
 	}
 
 	return message
