@@ -23,6 +23,7 @@ type HiScoreMenu struct {
 	HiScoreToSubmitIsNewHS bool
 	nameInputEnabled       bool
 	newHSPosition          int
+	newHiScoreBoardPos     int
 }
 
 var (
@@ -93,7 +94,7 @@ func (hsm *HiScoreMenu) Update() node.Message {
 			}
 			hsm.HiScores[hsm.newHSPosition].Name += string(readChars[i])
 		}
-		hsm.HiScoresStr = hiScoresToStr(hsm.HiScores)
+		hsm.HiScoresStr = hiScoresToStr(hsm.HiScores, hsm.newHiScoreBoardPos)
 	}
 
 	return message
@@ -138,7 +139,7 @@ func (hsm *HiScoreMenu) Draw(screen *ebiten.Image) {
 	node.Draw(hsm.MainMenuButton, screen)
 }
 
-func hiScoresToStr(hiScores *[config.HiScoreTopCount]hiscore.HiScore) string {
+func hiScoresToStr(hiScores *[config.HiScoreTopCount]hiscore.HiScore, newHiScorePos int) string {
 	hiScoresStr := ""
 	for i := range len(hiScores) {
 		if i > config.HiScoreTopCount {
@@ -148,6 +149,9 @@ func hiScoresToStr(hiScores *[config.HiScoreTopCount]hiscore.HiScore) string {
 			[]string{hiScores[i].Name, fmt.Sprintf("%d", hiScores[i].Score)},
 			" ",
 		)
+		if newHiScorePos == i {
+			row += "<<"
+		}
 		hiScoresStr += row + "\n"
 	}
 	return hiScoresStr
@@ -163,17 +167,17 @@ func NewHiScoreMenu(scoreToSubmit uint64) *HiScoreMenu {
 	hsm.HiScores = &[config.HiScoreTopCount]hiscore.HiScore{}
 	hsm.Title = "Hi-Scores"
 	hiscore.LoadHiScores(hsm.HiScores, path)
+	hsm.newHiScoreBoardPos = hsm.getScoreBoardPosition(scoreToSubmit)
 	if scoreToSubmit != 0 {
-		pos := hsm.getScoreBoardPosition(scoreToSubmit)
-		fmt.Println(pos)
-		if pos != -1 {
-			hsm.HiScores = (*[10]hiscore.HiScore)(*hsm.insertAndTrucateHighScore(hsm.HiScores[:], scoreToSubmit, pos))
+		//fmt.Println(hsm.newHiScoreBoardPos)
+		if hsm.newHiScoreBoardPos != -1 {
+			hsm.HiScores = (*[10]hiscore.HiScore)(*hsm.insertAndTrucateHighScore(hsm.HiScores[:], scoreToSubmit, hsm.newHiScoreBoardPos))
 			hsm.HiScoreToSubmitIsNewHS = true
 		}
 
 	}
 
-	hsm.HiScoresStr = hiScoresToStr(hsm.HiScores)
+	hsm.HiScoresStr = hiScoresToStr(hsm.HiScores, hsm.newHiScoreBoardPos)
 
 	//fmt.Println(hsm.HiScoresStr)
 

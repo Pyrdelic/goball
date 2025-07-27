@@ -57,6 +57,11 @@ func (g *Game) Update() error {
 			return ErrTerminated // exit game
 		case menu.StartGameButtonPressed:
 			ebiten.SetCursorMode(ebiten.CursorModeHidden)
+			// reset score, lives
+			g.Player.Score = 0
+			g.level.Lives = config.StartingLives
+			// init a new level
+			g.level = level.NewLevel(1)
 			g.CurrScene = g.level
 		}
 	case "Level":
@@ -66,10 +71,10 @@ func (g *Game) Update() error {
 			fmt.Println("GAME OVER")
 
 			g.HiScoreMenu = menu.NewHiScoreMenu(uint64(g.Player.Score))
-			g.CurrScene = g.HiScoreMenu
 
 			ebiten.SetCursorMode(ebiten.CursorModeVisible)
-			g.CurrScene = g.GameOverMenu
+			//g.CurrScene = g.GameOverMenu
+			g.CurrScene = g.HiScoreMenu
 		case level.Pause:
 			ebiten.SetCursorMode(ebiten.CursorModeVisible)
 			fmt.Println("PAUSE")
@@ -105,11 +110,6 @@ func (g *Game) Update() error {
 		switch message.Msg {
 		case menu.MainMenuButtonPressed:
 			g.CurrScene = g.MainMenu
-		case menu.KeyPressed:
-			if g.HighScoreAchieved {
-
-			}
-			//fmt.Println("menu.Keypressed:", string(message.IntExtra))
 		}
 
 	default:
@@ -165,7 +165,7 @@ func main() {
 	game.PauseMenu = menu.NewPauseMenu()
 	game.MainMenu = menu.NewMainMenu()
 	game.GameOverMenu = menu.NewGameOverMenu()
-	game.HiScoreMenu = menu.NewHiScoreMenu(750000)
+	game.HiScoreMenu = menu.NewHiScoreMenu(0)
 
 	// init balls
 	game.balls[0] = entities.NewBall(
@@ -185,7 +185,7 @@ func main() {
 	game.level.PrintLevel()
 
 	//game.CurrScene = game.MainMenu
-	game.CurrScene = game.HiScoreMenu
+	game.CurrScene = game.MainMenu
 
 	ebiten.SetVsyncEnabled(false)
 	//ebiten.SetCursorMode(ebiten.CursorModeHidden)
