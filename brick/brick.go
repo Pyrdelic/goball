@@ -12,6 +12,7 @@ import (
 const (
 	BrickTypeBasic = rune('1')
 	BrickTypeSteel = rune('2')
+	BrickTypeFire  = rune('3')
 )
 
 var (
@@ -25,6 +26,12 @@ var (
 		R: uint8(127),
 		G: uint8(127),
 		B: uint8(127),
+		A: uint8(255),
+	}
+	BrickColorFire = color.RGBA{
+		R: uint8(255),
+		G: uint8(164),
+		B: uint8(0),
 		A: uint8(255),
 	}
 )
@@ -45,6 +52,7 @@ type Brick struct {
 }
 
 // Hit reduces Bricks health accordily and returns score gained and damage dealt
+// TODO: deprecate
 func (b *Brick) Hit() (int, int) {
 	if b == nil {
 		return 0, 0
@@ -55,6 +63,9 @@ func (b *Brick) Hit() (int, int) {
 		return config.BrickHitScore, 1 // return damage dealt
 	case BrickTypeSteel:
 		return 0, 0 // steel brick is indestructible
+	case BrickTypeFire:
+		b.Health--
+		return config.BrickHitScore, 1
 	default:
 		return 0, 0
 	}
@@ -111,6 +122,10 @@ func NewBrick(x, y float64, brickType rune) (*Brick, int) {
 		brick.Destructable = false
 		brick.Image.Fill(BrickColorSteel)
 		brick.Health = 0
+	case BrickTypeFire:
+		brick.Destructable = true
+		brick.Image.Fill(BrickColorFire)
+		brick.Health = 1
 	default:
 		return nil, 0
 	}

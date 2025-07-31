@@ -117,6 +117,48 @@ func (l *Level) PrintLevel() {
 	}
 }
 
+// hitBrick damages brick(s) and returns the gained score
+func (l *Level) hitBrick(brickRow, brickCol int) int {
+	if l.Bricks[brickRow][brickCol] == nil || l.Bricks[brickRow][brickCol].Health <= 0 {
+		return 0
+	}
+
+	switch l.Bricks[brickRow][brickCol].BrickType {
+	case brick.BrickTypeBasic:
+
+		l.Bricks[brickRow][brickCol].Health--
+		l.TotalHealth--
+
+		return config.BrickHitScore
+	case brick.BrickTypeSteel:
+		return 0
+	case brick.BrickTypeFire:
+		score := 0
+
+		l.Bricks[brickRow][brickCol].Health--
+		l.TotalHealth--
+
+		score += config.BrickHitScore
+		// one block wide cross-shaped area effect (explosion)
+		if brickRow > 0 {
+			score += l.hitBrick(brickRow-1, brickCol)
+		}
+		if brickRow < config.BrickRowCount-1 {
+			score += l.hitBrick(brickRow+1, brickCol)
+		}
+		if brickCol > 0 {
+			score += l.hitBrick(brickRow, brickCol-1)
+		}
+		if brickCol < config.BrickColumnCount-1 {
+			score += l.hitBrick(brickRow, brickCol+1)
+		}
+		return score
+	default:
+		return 0
+	}
+	return 0
+}
+
 func (l *Level) Update() node.Message {
 	if l == nil {
 		return node.Message{
@@ -213,8 +255,26 @@ func (l *Level) Update() node.Message {
 					}
 					//collidedBrick.Health--
 					// damage the brick
-					scoreGained, damageDealt := collidedBrick.Hit()
-					l.TotalHealth -= damageDealt
+
+					// TODO: deprecate, move damage logic here
+					// (area effects require access to all bricks)
+					//scoreGained, damageDealt := collidedBrick.Hit()
+					//damageDealt := 0
+
+					scoreGained := l.hitBrick(iRow, iColumn)
+
+					// switch collidedBrick.BrickType {
+					// case brick.BrickTypeBasic:
+					// 	collidedBrick.Health--
+					// 	scoreGained += config.BrickHitScore
+					// case brick.BrickTypeSteel:
+					// 	break
+					// case brick.BrickTypeFire:
+					// 	collidedBrick.Health--
+					// 	scoregained += config.BrickHitScore
+					// }
+
+					//l.TotalHealth -= damageDealt
 					tickScore += scoreGained
 				}
 			}

@@ -107,7 +107,7 @@ func (hsm *HiScoreMenu) Update() node.Message {
 			}
 			hsm.HiScores[hsm.newHSPosition].Name += string(readChars[i])
 		}
-		hsm.HiScoresStr = hiScoresToStr(hsm.HiScores, hsm.newHiScoreBoardPos)
+		hsm.HiScoresStr = hsm.hiScoresToStr(hsm.HiScores, hsm.newHiScoreBoardPos)
 
 	}
 
@@ -153,21 +153,44 @@ func (hsm *HiScoreMenu) Draw(screen *ebiten.Image) {
 	node.Draw(hsm.MainMenuButton, screen)
 }
 
-func hiScoresToStr(hiScores *[config.HiScoreTopCount]hiscore.HiScore, newHiScorePos int) string {
+var blinkerTick uint64 = 0
+var blinkerToggle bool = false
+
+func (hsm *HiScoreMenu) hiScoresToStr(hiScores *[config.HiScoreTopCount]hiscore.HiScore, newHiScorePos int) string {
 	hiScoresStr := ""
+	cursor := ""
+	if hsm.nameInputEnabled {
+		if blinkerTick%10 == 0 {
+			blinkerToggle = !blinkerToggle
+		}
+		if blinkerToggle {
+			cursor = "*"
+		} else {
+			cursor = "_"
+		}
+	}
+
 	for i := range len(hiScores) {
-		if i > config.HiScoreTopCount {
-			break
-		}
-		row := strings.Join(
-			[]string{hiScores[i].Name, fmt.Sprintf("%d", hiScores[i].Score)},
-			" ",
-		)
+		row := ""
 		if newHiScorePos == i {
-			row += "<<"
+			row = strings.Join(
+				[]string{hiScores[i].Name, cursor, fmt.Sprintf("%d", hiScores[i].Score)},
+				" ",
+			)
+		} else {
+			row = strings.Join(
+				[]string{hiScores[i].Name, fmt.Sprintf("%d", hiScores[i].Score)},
+				" ",
+			)
+
 		}
+
+		// if newHiScorePos == i {
+		// 	row += "<<"
+		// }
 		hiScoresStr += row + "\n"
 	}
+	blinkerTick++
 	return hiScoresStr
 }
 
@@ -191,7 +214,7 @@ func NewHiScoreMenu(scoreToSubmit uint64) *HiScoreMenu {
 
 	}
 
-	hsm.HiScoresStr = hiScoresToStr(hsm.HiScores, hsm.newHiScoreBoardPos)
+	hsm.HiScoresStr = hsm.hiScoresToStr(hsm.HiScores, hsm.newHiScoreBoardPos)
 
 	//fmt.Println(hsm.HiScoresStr)
 
