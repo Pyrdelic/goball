@@ -7,21 +7,24 @@ import (
 	"os"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/pyrdelic/goball/brick"
 	"github.com/pyrdelic/goball/config"
 	"github.com/pyrdelic/goball/entities"
 	"github.com/pyrdelic/goball/node"
+	"github.com/pyrdelic/goball/powerup"
 )
 
 type Level struct {
 	Bricks       [config.BrickRowCount][config.BrickColumnCount]*brick.Brick
 	TotalHealth  int
 	Paddle       *entities.Paddle
-	Balls        [config.BallMaxCount]*entities.Ball
+	Balls        []*entities.Ball
 	BallCount    int
 	CurrLevelNum int
 	Lives        int
+	PowerUps     []*powerup.PowerUp
 }
 
 // MESSAGES
@@ -92,13 +95,20 @@ func NewLevel(levelNumber int) *Level {
 	level.LoadFromFile(levelPath)
 	level.Paddle = entities.NewPaddle()
 	// TODO: addball function
-	level.Balls[0] = entities.NewBall(
+	level.Balls = append(level.Balls, entities.NewBall(
 		config.PlayAreaWidth/2.0,
 		config.PlayAreaHeight/2.0,
 		config.BallStartingSpeed,
 		config.BallStartingAngle,
 		true,
-	)
+	))
+	// level.Balls[0] = entities.NewBall(
+	// 	config.PlayAreaWidth/2.0,
+	// 	config.PlayAreaHeight/2.0,
+	// 	config.BallStartingSpeed,
+	// 	config.BallStartingAngle,
+	// 	true,
+	// )
 	return &level
 }
 
@@ -212,6 +222,8 @@ func (l *Level) Update() node.Message {
 	}
 
 	//fmt.Println("Update level")
+
+	var hitSpeedX, hitSpeedY float64
 	for i := range len(l.Balls) {
 		if l.Balls[i] == nil {
 			continue
@@ -226,6 +238,7 @@ func (l *Level) Update() node.Message {
 					collidedBrick := l.Bricks[iRow][iColumn]
 					// bounce if not already bounced (prevents bounce cancellation)
 					if !alreadyBouncedBrick {
+						hitSpeedX, hitSpeedY = l.Balls[i].SpeedX, l.Balls[i].SpeedY
 						// calculate collision lengts of x and y,
 						// this determines if the collision is x or y sided
 						// x
@@ -287,14 +300,78 @@ func (l *Level) Update() node.Message {
 			if l.Bricks[iRow][iColumn] == nil {
 				continue
 			}
+
+			// destroy the brick
 			if l.Bricks[iRow][iColumn].Health <= 0 &&
 				l.Bricks[iRow][iColumn].Destructable {
+
+				// spawn a powerup?
+				fmt.Println("PowerUp spawned")
+				l.PowerUps = append(l.PowerUps, powerup.NewPowerUp(
+					int(l.Bricks[iRow][iColumn].Rect.X),
+					int(l.Bricks[iRow][iColumn].Rect.Y),
+					powerup.MultiBall,
+					hitSpeedX*config.PowerUpSpeedMult,
+					hitSpeedY*config.PowerUpSpeedMult,
+				))
+
+				// destroy the brick
 				l.Bricks[iRow][iColumn] = nil
 				tickScore += config.BrickDestroyedScore
+
 			}
 		}
 	}
 
+	// PowerUp hit detection
+	for i := range len(l.PowerUps) {
+		if l.PowerUps[i] == nil {
+			continue
+		}
+		// left wall
+		if l.PowerUps[i].Rect.X < 0 && l.PowerUps[i].SpeedX < 0 {
+			l.PowerUps[i].SpeedX = -l.PowerUps[i].SpeedX
+		}
+		// right wall
+		if l.PowerUps[i].Rect.X+l.PowerUps[i].Rect.W > config.PlayAreaWidth &&
+			l.PowerUps[i].SpeedX > 0 {
+			l.PowerUps[i].SpeedX = -l.PowerUps[i].SpeedX
+		}
+
+		// collect powerups with paddle
+		if isColliding(&l.PowerUps[i].Rect, &l.Paddle.Rect) {
+			switch l.PowerUps[i].PowerUpType {
+			case powerup.MultiBall:
+				// duplicate each ball, mirror SpeedX
+				for iBall := range len(l.Balls) {
+					if l.Balls[iBall] == nil {
+						continue
+					}
+					newBall := entities.NewBall(
+						l.Balls[iBall].Rect.X,
+						l.Balls[iBall].Rect.Y,
+						l.Balls[iBall].SpeedBase,
+						config.BallStartingAngle,
+						false,
+					)
+					fmt.Println("Got powerup!")
+
+					newBall.SpeedX = -l.Balls[iBall].SpeedX
+					newBall.SpeedY = l.Balls[iBall].SpeedY
+					l.Balls = append(l.Balls, newBall)
+					l.BallCount++
+				}
+			}
+			l.PowerUps[i] = nil
+		}
+		fmt.Println(l.Balls)
+		// floor
+		if l.PowerUps[i] != nil &&
+			l.PowerUps[i].Rect.Y > config.PlayAreaWidth {
+			l.PowerUps[i] = nil
+		}
+	}
+	//fmt.Println(l.PowerUps)
 	// wall collisions & bounce
 	for i := 0; i < len(l.Balls); i++ {
 		if l.Balls[i] == nil {
@@ -370,6 +447,14 @@ func (l *Level) Update() node.Message {
 		l.Balls[i].SpeedBase *= config.BallSpeedIncrement
 
 	}
+
+	for i := range len(l.PowerUps) {
+		if l.PowerUps[i] == nil {
+			continue
+		}
+		node.Update(l.PowerUps[i])
+	}
+
 	node.Update(l.Paddle)
 	//g.paddle.Update()
 
@@ -415,10 +500,23 @@ func (l *Level) Draw(screen *ebiten.Image) {
 			node.Draw(l.Bricks[iRow][iColumn], screen)
 		}
 	}
+
+	// draw powerups
+	for i := range len(l.PowerUps) {
+		if l.PowerUps[i] == nil {
+			continue
+		}
+		node.Draw(l.PowerUps[i], screen)
+	}
 	// draw Paddle
 	node.Draw(l.Paddle, screen)
 	// draw Balls
 	for i := range len(l.Balls) {
 		node.Draw(l.Balls[i], screen)
 	}
+
+	ebitenutil.DebugPrint(screen, fmt.Sprintf(
+		"Ball count: %d",
+		l.BallCount,
+	))
 }

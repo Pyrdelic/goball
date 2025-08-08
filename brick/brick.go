@@ -95,7 +95,7 @@ func (b *Brick) Draw(screen *ebiten.Image) {
 		return
 	}
 	DIO := ebiten.DrawImageOptions{}
-	DIO.GeoM.Translate(float64(b.Rect.X), float64(b.Rect.Y)) // ??
+	DIO.GeoM.Translate(float64(b.Rect.X), float64(b.Rect.Y))
 	screen.DrawImage(b.Image, &DIO)
 	//fmt.Printf("%+v\n", p)
 }

@@ -30,5 +30,11 @@ const (
 
 	HiScoreTopCount = 10
 	HiScoreNameLen  = 3
-	GodMode         = false
+
+	PowerUpGravity   = 0.15
+	PowerUpWidth     = 20
+	PowerUpHeight    = 20
+	PowerUpSpeedMult = 2.0
+
+	GodMode = false
 )

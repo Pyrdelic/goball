@@ -7,7 +7,6 @@ import (
 	"log"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/pyrdelic/goball/config"
 	"github.com/pyrdelic/goball/entities"
 	"github.com/pyrdelic/goball/level"
@@ -122,12 +121,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	node.Draw(g.CurrScene, screen)
 
-	ebitenutil.DebugPrint(screen, fmt.Sprintf(
-		"lives: %d\nscore: %d",
-		g.level.Lives,
-		g.Player.Score))
-
-	// // text test
+	 // // text test
 	// str := "asdfasdf"
 	// text.Draw(screen, str, &text.GoTextFace{
 	// 	Source: faceSource,
